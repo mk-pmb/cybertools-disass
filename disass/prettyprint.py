@@ -22,22 +22,29 @@
 
 __author__ = 'ifontarensky'
 
-class DisassException(Exception):
-    """Generic Disass Specific exception, to help differentiate from other exceptions"""
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
+import sys
 
-class DataNotWin32ApplicationError(DisassException):
-    """Data Not a Win32 Application Exception"""
-    def __init__(self):
-        self.reasons = []
-        DisassException.__init__(self, "This is not a valid win32 application")
+try:
+    from distorm3 import Decode
+except ImportError:
+    print 'distorm3 is not installed, this is a fatal error'
+    print 'pip install distorm3'
+    sys.exit(1)
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
+    def disable(self):
+        self.HEADER = ''
+        self.OKBLUE = ''
+        self.OKGREEN = ''
+        self.WARNING = ''
+        self.FAIL = ''
+        self.ENDC = ''
 
 
-class InvalidValueEIP(DisassException):
-    """Exception for gracefully not saving Relative URLs in the cache"""
-
-class SanityCheckException(DisassException):
-    """Exception for failed sanity checks (which can potentially be disabled)"""
-
-# vim:ts=4:expandtab:sw=4

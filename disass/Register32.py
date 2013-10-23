@@ -23,6 +23,7 @@
 __author__ = 'ifontarensky'
 
 import sys
+from disass.prettyprint import bcolors
 
 """
 AL/AH/EAX : Registre général, sa valeur change très vite.
@@ -43,13 +44,24 @@ ESP/SP : Offset mémoire de la pile.\
 
 """
 
-class Registry32(object):
+class Register32(object):
 
     def __init__(self):
         self._eax = 0
         self._ebx = 0
         self._ecx = 0
         self._edx = 0
+        self._edi = 0
+        self._eip = 0
+        self._esi = 0
+        self._esp = 0
+        self._cs = 0
+        self._ds = 0
+        self._es = 0
+        self._fs = 0
+        self._gs = 0
+        self._ss = 0
+        self._bp = 0
 
     def _set_eax(self,v):
         self._eax = v&0xffffffff
@@ -190,11 +202,97 @@ class Registry32(object):
         return self._esp
 
     def _get_sp(self):
-        return (self._esp & 0x0000ffff)
+        return (self._sp & 0x0000ffff)
 
     def _set_sp(self,v):
-        self._esp = (self._esp & 0xffff0000) + (v & 0x0000ffff)
+        self._sp = (v & 0x0000ffff)
 
+    def _get_cs(self):
+        return (self._cs & 0x0000ffff)
+
+    def _set_cs(self,v):
+        self._cs = (v & 0x0000ffff)
+
+    def _get_ds(self):
+        return (self._ds & 0x0000ffff)
+
+    def _set_ds(self,v):
+        self._ds = (v & 0x0000ffff)
+
+    def _get_es(self):
+        return (self._es & 0x0000ffff)
+
+    def _set_es(self,v):
+        self._es = (v & 0x0000ffff)
+
+    def _get_fs(self):
+        return (self._fs & 0x0000ffff)
+
+    def _set_fs(self,v):
+        self._fs = (v & 0x0000ffff)
+
+    def _get_gs(self):
+        return (self._gs & 0x0000ffff)
+
+    def _set_gs(self,v):
+        self._gs = (v & 0x0000ffff)
+
+    def _get_ss(self):
+        return (self._ss & 0x0000ffff)
+
+    def _set_ss(self,v):
+        self._ss = (v & 0x0000ffff)
+
+    def _get_bp(self):
+        return (self._bp & 0x0000ffff)
+
+    def _set_bp(self,v):
+        self._bp = (v & 0x0000ffff)
+
+    def get_list_register(self):
+        """
+
+        """
+        r = []
+        t = ["eax","ax","al","ah"]
+        r.extend(t)
+        t = ["ebx","bx","bl","bh"]
+        r.extend(t)
+        t = ["ecx","cx","cl","ch"]
+        r.extend(t)
+        t = ["edx","dx","dl","dh"]
+        r.extend(t)
+        t = ["edi","di"]
+        r.extend(t)
+        t = ["eip","ip"]
+        r.extend(t)
+        t = ["esi","si"]
+        r.extend(t)
+        t = ["esp","sp"]
+        r.extend(t)
+        t = ["ebp","bp"]
+        r.extend(t)
+        t = ["cs","ds","es","fs","gs","ss"]
+        r.extend(t)
+
+        return r
+
+    def __repr__(self):
+        r =  "    Register            Segments\n"
+        r += "------------------------------------ \n"
+        r += "%s(EAX)%s 0x%08x    | %s(CS)%s 0x%04x \n" % (bcolors.HEADER,bcolors.ENDC,self.eax,bcolors.HEADER,bcolors.ENDC,self.cs)
+        r += "%s(EBX)%s 0x%08x    | %s(DS)%s 0x%04x \n" % (bcolors.HEADER,bcolors.ENDC,self.ebx,bcolors.HEADER,bcolors.ENDC,self.ds)
+        r += "%s(ECX)%s 0x%08x    | %s(ES)%s 0x%04x \n" % (bcolors.HEADER,bcolors.ENDC,self.ecx,bcolors.HEADER,bcolors.ENDC,self.es)
+        r += "%s(EDX)%s 0x%08x    | %s(FS)%s 0x%04x \n" % (bcolors.HEADER,bcolors.ENDC,self.edx,bcolors.HEADER,bcolors.ENDC,self.fs)
+        r += "                    | %s(GS)%s 0x%04x \n" % (bcolors.HEADER,bcolors.ENDC,self.gs)
+        r += "%s(EDI)%s 0x%08x    | %s(SS)%s 0x%04x\n" % (bcolors.HEADER,bcolors.ENDC,self.edi,bcolors.HEADER,bcolors.ENDC,self._ss)
+        r += "%s(EIP)%s 0x%08x    | %s(BP)%s 0x%04x\n" % (bcolors.HEADER,bcolors.ENDC,self.eip,bcolors.HEADER,bcolors.ENDC,self._bp)
+        r += "%s(ESI)%s 0x%08x\n" % (bcolors.HEADER,bcolors.ENDC,self.esi)
+        r += "%s(ESP)%s 0x%08x\n" % (bcolors.HEADER,bcolors.ENDC,self.esp)
+
+
+
+        return r
 
     eax = property(_get_eax, _set_eax,doc='read/write registry eax')
     ax = property(_get_ax, _set_ax,doc='read/write registry ax')
@@ -219,11 +317,22 @@ class Registry32(object):
     edi = property(_get_edi, _set_edi,doc='read/write registry edi')
     di = property(_get_di, _set_di,doc='read/write registry di')
 
-    eip = property(_get_eip, _set_eip,doc='read/write registry edi')
-    ip = property(_get_ip, _set_ip,doc='read/write registry di')
+    eip = property(_get_eip, _set_eip,doc='read/write registry eip')
+    ip = property(_get_ip, _set_ip,doc='read/write registry ip')
 
-    esi = property(_get_esi, _set_esi,doc='read/write registry edi')
-    si = property(_get_si, _set_si,doc='read/write registry di')
+    esi = property(_get_esi, _set_esi,doc='read/write registry esi')
+    si = property(_get_si, _set_si,doc='read/write registry si')
 
     esp = property(_get_esp, _set_esp,doc='read/write registry edi')
     sp = property(_get_sp, _set_sp,doc='read/write registry di')
+
+    cs = property(_get_cs, _set_cs,doc='read/write registry cs')
+    ds = property(_get_ds, _set_ds,doc='read/write registry ds')
+    es = property(_get_es, _set_es,doc='read/write registry es')
+    fs = property(_get_fs, _set_fs,doc='read/write registry fs')
+    gs = property(_get_gs, _set_gs,doc='read/write registry gs')
+    ss = property(_get_ss, _set_ss,doc='read/write registry ss')
+    bp = property(_get_bp, _set_bp,doc='read/write registry bp')
+
+
+# vim:ts=4:expandtab:sw=4

@@ -4,18 +4,18 @@
 import sys
 
 import pytest
-from disass.Registry32 import Registry32
+from disass.Register32 import Register32
 
-class Test_Registry_Disass32(object):
+class Test_Register_Disass32(object):
 
 
         
-    def test_create_registry(self):
+    def test_create_register(self):
         """
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
@@ -28,14 +28,14 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.eax = 0x080484cc
+        register.eax = 0x080484cc
 
-        if registry.eax == 0x080484cc:
+        if register.eax == 0x080484cc:
             assert True
         else:
             assert False
@@ -47,14 +47,14 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.ax = 0x080484cc
+        register.ax = 0x080484cc
 
-        if registry.ax == 0x84cc:
+        if register.ax == 0x84cc:
             assert True
         else:
             assert False
@@ -67,18 +67,18 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.al = 0x84cc
+        register.al = 0x84cc
 
-        if registry.al != 0xcc:
+        if register.al != 0xcc:
             assert False
             return
 
-        if registry.eax != 0xcc:
+        if register.eax != 0xcc:
             assert False
             return
 
@@ -90,14 +90,14 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.ebx = 0x080484cc
+        register.ebx = 0x080484cc
 
-        if registry.ebx == 0x080484cc:
+        if register.ebx == 0x080484cc:
             assert True
         else:
             assert False
@@ -109,14 +109,14 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.bx = 0x080484cc
+        register.bx = 0x080484cc
 
-        if registry.bx == 0x84cc:
+        if register.bx == 0x84cc:
             assert True
         else:
             assert False
@@ -129,18 +129,18 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.bl = 0x84cc
+        register.bl = 0x84cc
 
-        if registry.bl != 0xcc:
+        if register.bl != 0xcc:
             assert False
             return
 
-        if registry.ebx != 0xcc:
+        if register.ebx != 0xcc:
             assert False
             return
 
@@ -152,23 +152,23 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.ebx = 0x080484cc
+        register.ebx = 0x080484cc
 
-        if registry.bh != 0x84:
+        if register.bh != 0x84:
             assert False
             return
-        registry.bh = 0x77
+        register.bh = 0x77
 
-        if registry.bh != 0x077:
+        if register.bh != 0x077:
             assert False
             return
 
-        if registry.ebx != 0x080477cc:
+        if register.ebx != 0x080477cc:
             assert False
             return
 
@@ -180,14 +180,14 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.ecx = 0x080484cc
+        register.ecx = 0x080484cc
 
-        if registry.ecx == 0x080484cc:
+        if register.ecx == 0x080484cc:
             assert True
         else:
             assert False
@@ -199,14 +199,14 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.cx = 0x080484cc
+        register.cx = 0x080484cc
 
-        if registry.cx == 0x84cc:
+        if register.cx == 0x84cc:
             assert True
         else:
             assert False
@@ -219,18 +219,18 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.cl = 0x84cc
+        register.cl = 0x84cc
 
-        if registry.cl != 0xcc:
+        if register.cl != 0xcc:
             assert False
             return
 
-        if registry.ecx != 0xcc:
+        if register.ecx != 0xcc:
             assert False
             return
 
@@ -242,23 +242,23 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.ecx = 0x080484cc
+        register.ecx = 0x080484cc
 
-        if registry.ch != 0x84:
+        if register.ch != 0x84:
             assert False
             return
-        registry.ch = 0x77
+        register.ch = 0x77
 
-        if registry.ch != 0x077:
+        if register.ch != 0x077:
             assert False
             return
 
-        if registry.ecx != 0x080477cc:
+        if register.ecx != 0x080477cc:
             assert False
             return
 
@@ -271,14 +271,14 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.edx = 0x080484cc
+        register.edx = 0x080484cc
 
-        if registry.edx == 0x080484cc:
+        if register.edx == 0x080484cc:
             assert True
         else:
             assert False
@@ -290,18 +290,18 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.edx = 0x080484cc
-        registry.dx = 0x7777
-        if registry.dx != 0x7777:
+        register.edx = 0x080484cc
+        register.dx = 0x7777
+        if register.dx != 0x7777:
             assert False
             return
 
-        if registry.edx != 0x08047777:
+        if register.edx != 0x08047777:
             assert False
             return
 
@@ -313,18 +313,18 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.dl = 0x84cc
+        register.dl = 0x84cc
 
-        if registry.dl != 0xcc:
+        if register.dl != 0xcc:
             assert False
             return
 
-        if registry.edx != 0xcc:
+        if register.edx != 0xcc:
             assert False
             return
 
@@ -337,29 +337,127 @@ class Test_Registry_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         try:
-            registry = Registry32()
+            register = Register32()
         except:
             assert False
             return
 
-        registry.edx = 0x080484cc
+        register.edx = 0x080484cc
 
-        if registry.dh != 0x84:
+        if register.dh != 0x84:
             assert False
             return
-        registry.dh = 0x77
+        register.dh = 0x77
 
-        if registry.dh != 0x077:
+        if register.dh != 0x077:
             assert False
             return
 
-        if registry.edx != 0x080477cc:
+        if register.edx != 0x080477cc:
             assert False
             return
 
         assert True
         return
 
+    def test_cs(self):
 
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        try:
+            register = Register32()
+        except:
+            assert False
+            return
+
+        register.cs = 0x1111
+
+        if register.cs != 0x1111:
+            assert False
+            return
+
+        assert True
+        return
+
+    def test_ds(self):
+
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        try:
+            register = Register32()
+        except:
+            assert False
+            return
+
+        register.ds = 0x1111
+
+        if register.ds != 0x1111:
+            assert False
+            return
+
+        assert True
+        return
+
+    def test_es(self):
+
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        try:
+            register = Register32()
+        except:
+            assert False
+            return
+
+        register.es = 0x1111
+
+        if register.es != 0x1111:
+            assert False
+            return
+
+        assert True
+        return
+
+    def test_fs(self):
+
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        try:
+            register = Register32()
+        except:
+            assert False
+            return
+
+        register.fs = 0x1111
+
+        if register.fs != 0x1111:
+            assert False
+            return
+
+        assert True
+        return
+
+    def test_eip(self):
+
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        try:
+            register = Register32()
+        except:
+            assert False
+            return
+
+        register.eip = 0x11111111
+
+        if register.eip != 0x11111111:
+            assert False
+            return
+
+        assert True
+        return
 
 # vim:ts=4:expandtab:sw=4
