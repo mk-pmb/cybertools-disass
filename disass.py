@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
 #############################################################################
@@ -35,7 +35,7 @@ def get_jeanmishell():
         import IPython.Shell
         ipsh = IPython.Shell.IPShell(argv=[''], user_ns=locals(), user_global_ns=globals())
         return ipsh
-    except ImportError, e:
+    except ImportError as e:
         try:
             from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
             ipsh = TerminalInteractiveShell()
@@ -43,7 +43,7 @@ def get_jeanmishell():
             ipsh.user_global_ns.update(locals())
             ipsh.autocall = 2
             return ipsh
-        except ImportError, e:
+        except ImportError as e:
             return None
 
 if __name__ == '__main__':
@@ -60,7 +60,7 @@ This how you can interact with dumps:
     try:
         import rlcompleter
         import readline
-    except ImportError, e:
+    except ImportError as e:
         print >>sys.stderr, traceback.format_exc()
     else:
         class DisassCompleter(rlcompleter.Completer):
