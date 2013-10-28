@@ -22,7 +22,6 @@
 
 __author__ = 'ifontarensky'
 
-import sys
 from disass.prettyprint import bcolors
 
 """
@@ -249,30 +248,38 @@ class Register32(object):
     def _set_bp(self,v):
         self._bp = (v & 0x0000ffff)
 
+    def get(self, r):
+        """
+        """
+        if hasattr(self, r):
+            return getattr(self, r)
+        else:
+            return None
+
     def get_list_register(self):
         """
 
         """
         r = []
-        t = ["eax","ax","al","ah"]
+        t = ["eax", "ax", "al", "ah"]
         r.extend(t)
-        t = ["ebx","bx","bl","bh"]
+        t = ["ebx", "bx", "bl", "bh"]
         r.extend(t)
-        t = ["ecx","cx","cl","ch"]
+        t = ["ecx", "cx", "cl", "ch"]
         r.extend(t)
-        t = ["edx","dx","dl","dh"]
+        t = ["edx", "dx", "dl", "dh"]
         r.extend(t)
-        t = ["edi","di"]
+        t = ["edi", "di"]
         r.extend(t)
-        t = ["eip","ip"]
+        t = ["eip", "ip"]
         r.extend(t)
-        t = ["esi","si"]
+        t = ["esi", "si"]
         r.extend(t)
-        t = ["esp","sp"]
+        t = ["esp", "sp"]
         r.extend(t)
-        t = ["ebp","bp"]
+        t = ["ebp", "bp"]
         r.extend(t)
-        t = ["cs","ds","es","fs","gs","ss"]
+        t = ["cs", "ds", "es", "fs", "gs", "ss"]
         r.extend(t)
 
         return r
