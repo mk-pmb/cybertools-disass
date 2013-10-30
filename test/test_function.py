@@ -192,4 +192,138 @@ class Test_Function_Disass32(object):
         assert False
         return
 
+
+    def test_print_assembly(self):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+        try:
+            disass.print_assembly()
+        except:
+            assert False
+            return
+
+        assert True
+        return
+
+    def test_next(self):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+
+        s1 = disass.decode[0]
+        s2 = disass.decode[1]
+        s3 = disass.decode[2]
+        s4 = disass.decode[3]
+
+        if disass.register.eip != s1[0]:
+            assert False
+        disass.next()
+        if disass.register.eip != s2[0]:
+            assert False
+        disass.next()
+        if disass.register.eip != s3[0]:
+            assert False
+        disass.next()
+        if disass.register.eip != s4[0]:
+            assert False
+
+        assert True
+        return
+
+    def test_previous(self):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+
+        s1 = disass.decode[0]
+        s2 = disass.decode[1]
+        s3 = disass.decode[2]
+        s4 = disass.decode[3]
+
+        disass.set_position(s4[0])
+        if disass.register.eip != s4[0]:
+            assert False
+            return
+
+        print s4[0]
+        disass.previous()
+        if disass.register.eip != s3[0]:
+            print disass.register.eip, s3[0]
+            assert False
+        disass.previous()
+        if disass.register.eip != s2[0]:
+            assert False
+        disass.previous()
+        if disass.register.eip != s1[0]:
+            assert False
+
+        assert True
+        return
+
+    @pytest.mark.parametrize("value", [1,10,50,0x100])
+    def test_next_and_forward(self, value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+        from disass.exceptions import InvalidValueEIP
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+        hist = list()
+        for d in disass.decode:
+            hist.append(d[0])
+
+        for v in xrange(value):
+            disass.next()
+            if disass.register.eip != hist[v+1]:
+                print "ep", disass.get_entry_point()
+                print disass.register.eip ,  hist[v+1]
+                print disass.decode[0]
+                print disass.decode[1]
+                assert False
+
+        for v in xrange(value):
+            disass.previous()
+            if disass.register.eip != hist[value-v-1]:
+                print "ep", disass.get_entry_point()
+                print disass.register.eip ,  hist[value-v-1]
+                print disass.decode[0]
+                print disass.decode[1]
+                assert False
+
+
+
+        assert True
+        return
+
+
 # vim:ts=4:expandtab:sw=4

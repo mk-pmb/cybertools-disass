@@ -53,6 +53,9 @@ class Disass32():
         self.load_win32_pe(path=path,data=data)
         self.verbose = verbose
 
+        if verbose:
+            self.print_assembly()
+
 
     def load_win32_pe(self,path=None,data=None):
         """
@@ -153,7 +156,12 @@ class Disass32():
 
         self.register.eip = pos
         eip = self.register.eip
-        self.decode = Decode(eip,self.data_code[eip:eip+0x200])
+        ep = self.get_entry_point()
+        if ep > eip-0x40:
+            self.decode = Decode(ep, self.data_code[ep:ep+0x1000])
+        else:
+            self.decode = Decode(eip-0x40, self.data_code[eip-0x40:eip+0x1000])
+
 
     def jump(self,value):
         """
@@ -163,7 +171,17 @@ class Disass32():
         eip=self.decode[value:value+1][0][0]
         self.set_position(eip)
 
-    #def trace_to(self,value):
+    def go_to_function(self,name,history=[]):
+        eip = self.register.eip
+        for d in Decode(eip,self.data_code[eip:eip+0x1000]):
+            instruction = d[2]
+            offset = d[0]
+            if name in self.replace_function(instruction):
+                self.set_position(offset)
+
+                return True
+
+        return False
 
 
     def get_function_name(self,opcode=None,saddr=None):
@@ -228,35 +246,92 @@ class Disass32():
 
 
 
-    def print_assembly(self,start=0,nb_instruction=0x20):
+    def print_assembly(self,start=-0x20,nb_instruction=0x20):
         """
         TODO:
         """
-        for b in self.decode[start:nb_instruction]:
-            try:
-                if "CALL" in b[2]:
-                    if "CALL DWORD" in b[2]:
-                        print "\t%04x : %15s : CALL DWORD %s" % (b[0],b[3],bcolors.HEADER + self.get_function_name(b[2]) + bcolors.ENDC)
+        if self.get_entry_point()==self.register.eip:
+            print "\t-------------- ENTRYPOINT -------------"
 
-                    elif "CALL" in b[2]:
-                        print "\t%04x : %15s : CALL %s" % (b[0],b[3],bcolors.HEADER + self.get_function_name(b[2]) + bcolors.ENDC)
+        ep = self.get_entry_point()
+        if ep > self.register.eip-0x40:
+            s = 0
+            e = nb_instruction
+        else:
+            s = start+0x20
+            e = start+0x20+nb_instruction
 
-                elif "JMP" in b[2]:
-                    print "\t%04x : %15s : JMP %s" % (b[0],b[3], bcolors.HEADER + self.get_function_name(b[2]) + bcolors.ENDC)
+        for b in self.decode[s:e]:
+            self.print_instruction(b[0], b[3], b[2])
 
-                elif "MOV " in b[2]:
-                    dest = b[2].split(' ')[1]
-                    src = b[2].split(' ')[2]
-                    if not self.is_register(src):
-                        print "\t%04x : %15s : MOV %s %s" % (b[0],b[3], dest,bcolors.HEADER + self.get_function_name(b[2]) + bcolors.ENDC)
-                    else:
-                        print "\t%04x : %15s : %s" % (b[0],b[3], b[2])
+    def replace_function(self, instruction):
+        """
+        Replace address in instruction by the corresponding name
+        @param : instruction
+        @type : string
+        """
+        try:
+            if "CALL" in instruction:
+                if "CALL DWORD" in instruction:
+                    return "CALL DWORD %s" % (bcolors.HEADER + self.get_function_name(instruction) + bcolors.ENDC)
+
+                elif "CALL" in instruction:
+                    return "CALL %s" % (bcolors.HEADER + self.get_function_name(instruction) + bcolors.ENDC)
+
+            elif "JMP" in instruction:
+                return "JMP %s" % (bcolors.HEADER + self.get_function_name(instruction) + bcolors.ENDC)
+
+            elif "MOV " in instruction:
+                dest = instruction.split(' ')[1]
+                src = instruction.split(' ')[2]
+                if not self.is_register(src):
+                    return "MOV %s %s" % (dest,bcolors.HEADER + self.get_function_name(instruction) + bcolors.ENDC)
                 else:
-                    print "\t%04x : %15s : %s" % (b[0],b[3], b[2])
-            except Exception as e:
-                print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't decompose this opcode '%s'" % b[2] + bcolors.ENDC
-                raise e
+                    return "%s" % (instruction)
+            else:
+                return "%s" % (instruction)
+        except Exception as e:
+            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't decompose this opcode '%s'" % instruction + bcolors.ENDC
+            raise e
+
+    def print_instruction(self, offset, code, instruction):
+        """
+        Print instruction in arguments
+        @param : offset
+        @param : code
+        @param : instruction
+        """
+        try:
+            if offset == self.register.eip:
+                print "\t%s%s%s%04x : %15s : %s%s%s%s" % (bcolors.BGGREEN, bcolors.BOLD, bcolors.FGBLACK, offset, code, self.replace_function(instruction), bcolors.ENDC, bcolors.ENDC, bcolors.ENDC)
+            else:
+                print "\t%04x : %15s : %s" % (offset, code, self.replace_function(instruction))
+        except Exception as e:
+            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't print this instructrion '%s:%s'" % (offset, instruction) + bcolors.ENDC
+            raise e
 
 
+    def next(self):
+        """
+        Advance one instruction
+        """
+        eip = self.register.eip
+        dec = Decode(eip, self.data_code[eip:eip+0x40])
+        self.set_position(dec[1][0])
+
+        if self.verbose:
+            self.print_assembly()
+
+    def previous(self):
+        """
+        Advance one instruction
+        """
+        eip = self.register.eip
+        dec = Decode(eip-0x40, self.data_code[eip-0x40:eip])
+        s = len(dec)
+        self.set_position(dec[s-1][0])
+
+        if self.verbose:
+            self.print_assembly()
 
 # vim:ts=4:expandtab:sw=4

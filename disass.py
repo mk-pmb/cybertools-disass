@@ -24,10 +24,10 @@
 @organization: Cassidian CyberSecurity
 """
 
+__author__ = 'ifontarensky'
 __author__ = 'jmpicod'
 
 import sys
-import os
 import __builtin__
 
 def get_jeanmishell():

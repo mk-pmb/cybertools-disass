@@ -39,6 +39,10 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+    BGGREEN='\033[42m'
+    FGBLACK='\033[30m'
+    BOLD='\033[1m'
+
     def disable(self):
         self.HEADER = ''
         self.OKBLUE = ''
