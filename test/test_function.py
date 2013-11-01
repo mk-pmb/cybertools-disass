@@ -373,5 +373,25 @@ class Test_Function_Disass32(object):
         assert False
         return
 
+    @pytest.mark.parametrize("value", ['GetVersion','GetCommandLine','CreateThread'])
+    def test_go_to_function(self,value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+        from disass.exceptions import InvalidValueEIP
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+
+        if disass.go_to_function(value):
+            assert True
+            return
+
+        assert False
+        return
 
 # vim:ts=4:expandtab:sw=4

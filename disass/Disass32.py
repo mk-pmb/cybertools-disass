@@ -52,6 +52,7 @@ class Disass32():
     def __init__(self,path=None,data=None,verbose=False):
 
         self.register = Register32()
+        self.stack = list()
         self.load_win32_pe(path=path,data=data)
         self.verbose = verbose
 
@@ -173,13 +174,18 @@ class Disass32():
         eip=self.decode[value:value+1][0][0]
         self.set_position(eip)
 
-    def go_to_function(self,name,history=[]):
+    def go_to_function(self,name,offset=0,history=[],indent=1):
         """
 
         """
         eip = self.register.eip
+        if offset==0:
+            #print "(eip)",hex(eip)
+            offset = eip
 
-        for d in Decode(eip,self.data_code[eip:eip+0x1000]):
+
+
+        for d in Decode(offset,self.data_code[offset:offset+0x300000]):
             instruction = d[2]
             offset = d[0]
 
@@ -187,32 +193,44 @@ class Disass32():
 
             if name in self.replace_function(instruction):
                 self.set_position(offset)
+                if self.verbose:
+                    self.print_assembly()
                 return True
             else:
+                if 'RET' in instruction:
+                    ret = self.stack.pop()
+                    return False
+
                 if "CALL" in instruction :
                     saddr = self.get_function_name(instruction)
 
                     if "0x" in saddr:
-                        addr = int(saddr,16)
-                        self.set_position(addr)
-                        print "Saute ici : %x" % addr
+                        if '[' in saddr:
+                            continue
+                        if ':' in saddr:
+                            continue
+
+                        try:
+                            saddr = compute_operation(saddr, self.register)
+                        except Exception as e:
+                            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't eval instruction'%s'" % instruction + bcolors.ENDC
+                            continue
+                        addr = saddr
+
+
+                        if addr in history:
+                            continue
 
                         if addr not in history:
-                            self.go_to_function(name, history)
-
-                elif "JMP" in instruction:
-                    saddr = self.get_function_name(instruction)
-                    if "0x" in saddr:
-                        print instruction
-                        saddr = compute_operation(saddr,self.register)
-                        addr = int(str(saddr),16)
-                        self.set_position(addr)
-                        print "Saute ici : %x" % addr
-
-                        if addr not in history:
-                            self.go_to_function(name, history)
+                            self.stack.append(offset)
+                            #print "(0x%x)"%offset," "*indent, ' ',instruction
+                            self.go_to_function(name, addr, history, indent+1)
+                        else:
+                            print 'deja vu',instruction
 
 
+
+        #print " "*indent, ' --> not found'
         return False
 
 
@@ -225,6 +243,8 @@ class Disass32():
             if "CALL" in opcode:
                 if "CALL DWORD" in opcode:
                     saddr = opcode.split(' ')[2]
+                elif "CALL FAR" in opcode:
+                    saddr = opcode.split(' ')[2]
                 else:
                     saddr = opcode.split(' ')[1]
                 return saddr
@@ -232,6 +252,11 @@ class Disass32():
             elif "JMP" in opcode:
                 if "JMP DWORD" in opcode:
                     saddr = opcode.split(' ')[2]
+                elif "JMP FAR" in opcode:
+                    if "JMP FAR DWORD" in opcode:
+                        saddr = opcode.split(' ')[3]
+                    else:
+                        saddr = opcode.split(' ')[2]
                 else:
                     saddr = opcode.split(' ')[1]
                 return saddr
