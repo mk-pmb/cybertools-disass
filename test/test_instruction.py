@@ -1,62 +1,67 @@
 import pytest
-from disass.Instruction32 import is_an_operator
+import math
 from disass.Instruction32 import compute_operation
 from disass.Register32 import Register32
 
 
+
 class Test_Instruction_Disass32(object):
-    @pytest.mark.parametrize("operation", [
-        ("3+5", "+"),
-        ("2-4", "-"),
-        ("2/4", "/"),
-        ("2*4", "*"),
-        ("2+4*2", "+"),
-        ("2+4/2", "+"),
-        ("2+4/2", "+"),
-        ("2**4_2", None),
-        ("2//4^2", None),
-        ("2\4_2", None),
-        ("2++4//2", None),
-    ])
-    def test_is_operator(self, operation):
-        """
-        Test de l'initialisation du moteur disass 32
-        """
-        r = is_an_operator(operation[0])
-        if r == operation[1]:
-            assert True
-        else:
-            print operation[0], operation[1], r
-            assert False
-        return
+
 
     @pytest.mark.parametrize("o", [
-        ("3+5", 8), ("2-4", -2), ("2/4", 2 / 4), ("2*4", 2 * 4), ("2+4*2", 2 + 4 * 2),
-        ("2+4/2", 2 + 4 / 2), ("2-4/2", 2 - 4 / 2), ("2-0/2", 2 - 0 / 2), ("0/2*3*6+2", 0 / 2 * 3 * 6 + 2)
+        ("3+5", 8), ("2-4", -2), ("2/4", float(2) / float(4)), ("2*4", 2 * 4), ("2+4*2", 2 + 4 * 2),
+        ("2+4/2", 2 + 4 / 2), ("2-4/2", 2 - 4 / 2), ("2-0/2", 2 - 0 / 2), ("0/2*3*6+2", 0 / 2 * 3 * 6 + 2),
+        ("0x1000",0x1000),("0x1000+5",0x1000+5),
+        ( "9", 9 ),
+        ( "-9", -9 ),
+        ( "--9", 9 ),
+        ( "-E", -math.e ),
+        ( "9 + 3 + 6", 9 + 3 + 6 ),
+        ( "9 + 3 / 11", 9 + 3.0 / 11 ),
+        ( "(9 + 3)", (9 + 3) ),
+        ( "(9+3) / 11", (9+3.0) / 11 ),
+        ( "9 - 12 - 6", 9 - 12 - 6 ),
+        ( "9 - (12 - 6)", 9 - (12 - 6) ),
+        ( "2*3.14159", 2*3.14159 ),
+        ( "3.1415926535*3.1415926535 / 10", 3.1415926535*3.1415926535 / 10 ),
+        ( "PI * PI / 10", math.pi * math.pi / 10 ),
+        ( "PI*PI/10", math.pi*math.pi/10 ),
+        ( "PI^2", math.pi**2 ),
+        ( "6.02E23 * 8.048", 6.02E23 * 8.048 ),
+        ( "e / 3", math.e / 3 ),
+        ( "E^PI", math.e**math.pi ),
+        ( "2^3^2", 2**3**2 ),
+        ( "2^3+2", 2**3+2 ),
+        ( "2^9", 2**9 ),
     ])
-    def test_compute_operation(self, o):
+    def test_compute_operation_basic(self, o):
         """
         Test de l'initialisation du moteur disass 32
         """
         register = Register32()
         r = compute_operation(o[0], register)
+
         if r == o[1]:
+            print o[1], "=", str(r)
             assert True
         else:
-            print o[0], o[1], r
+            print "%s !!! %s != %s " % (o[0],str(r), str(o[1]))
             assert False
+
         return
 
     @pytest.mark.parametrize("o", [
-        ("3+5+eax", 13), ("2-4+eax", 3), ("2/4+eax", 2 / 4 + 5), ("2*4*eax", 40), ("2+eax*2", 12),
-        ("0/2*3*eax+2", 2)
+        ("3+5+eax", 13), ("2-4+eax", 3), ("2/4+eax", float(2) / 4 + 5), ("2*4*eax", 40), ("2+eax*2", 12),
+        ("0/2*3*eax+2", 2), ('EDX*4+0x406e88',1*4+0x406e88)
     ])
-    def test_compute_operation_eax(self, o):
+    def test_compute_operation_register(self, o):
         """
         Test de l'initialisation du moteur disass 32
         """
+
         register = Register32()
         register.eax = 5
+        register.edx = 1
         r = compute_operation(o[0], register)
         if r == o[1]:
             assert True

@@ -326,4 +326,52 @@ class Test_Function_Disass32(object):
         return
 
 
+    @pytest.mark.parametrize("value", ['CALL 0x1111', 'CALL DWORD 0x1111', 'JMP 0x1111'])
+    def test_extract_address(self,value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+        from disass.exceptions import InvalidValueEIP
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+        addr = disass.extract_address(value)
+
+        if addr == '0x1111':
+            assert True
+            return
+
+        assert False
+        return
+
+
+    @pytest.mark.parametrize("value", [
+        ('MOV DWORD [0x41fad0], 0x10','MOV DWORD [0x41fad0], 0x10'),
+        ('CALL 0x4171b8','CALL \033[95mCreateThread\033[0m')])
+    def test_replace_in_function(self,value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+        from disass.exceptions import InvalidValueEIP
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+        addr = disass.replace_function(value[0])
+        print addr,value[1]
+        if addr == value[1]:
+            assert True
+            return
+
+        assert False
+        return
+
+
 # vim:ts=4:expandtab:sw=4

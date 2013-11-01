@@ -21,65 +21,122 @@
 """
 
 __author__ = 'ifontarensky'
+from pyparsing import Literal, CaselessLiteral, Word, Group, Optional, \
+    ZeroOrMore, Forward, nums, alphas, Regex, ParseException
 
-operators = ['+', '-', '/', '*']
+import math
+import operator
+import re
 
-
-def is_an_operator(operations):
+def bnf(exprStack):
     """
-    Check if an operator is in operations
-    @param : operation
-    @type : string
-    return None if not found
+    expop   :: '^'
+    multop  :: '*' | '/'
+    addop   :: '+' | '-'
+    integer :: ['+' | '-'] '0'..'9'+
+    atom    :: PI | E | real | fn '(' expr ')' | '(' expr ')'
+    factor  :: atom [ expop factor ]*
+    term    :: factor [ multop factor ]*
+    expr    :: term [ addop term ]*
     """
-    for o in operators:
-        if o in operations:
-            if o in '**' and '**' in operations:
-                continue
-            if o in '//' and '//' in operations:
-                continue
-            if o in '--' and '--' in operations:
-                continue
-            if o in '++' and '++' in operations:
-                continue
-            else:
-                return o
-    return None
+    def pushFirst(strg, loc, toks):
+        exprStack.append(toks[0])
+
+    def pushUMinus(strg, loc, toks):
+        for t in toks:
+          if t == '-':
+            exprStack.append('unary -')
+            #~ exprStack.append('-1')
+            #~ exprStack.append('*')
+          else:
+            break
+
+    point = Literal('.')
+    e     = CaselessLiteral('E')
+    #~ fnumber = Combine(Word('+-'+nums, nums) +
+                       #~ Optional(point + Optional(Word(nums))) +
+                       #~ Optional(e + Word('+-'+nums, nums)))
+    fnumber = Regex(r' [+-]? \d+ (:? \. \d* )? (:? [eE] [+-]? \d+)?', re.X)
+    xnumber = Regex(r'0 [xX] [0-9 a-f A-F]+', re.X)
+    ident = Word(alphas, alphas+nums+'_$')
+
+    plus  = Literal('+')
+    minus = Literal('-')
+    mult  = Literal('*')
+    div   = Literal('/')
+    lpar  = Literal('(').suppress()
+    rpar  = Literal(')').suppress()
+    addop  = plus | minus
+    multop = mult | div
+    expop = Literal('^')
+    pi    = CaselessLiteral('PI')
+
+    expr = Forward()
+    atom_parts = pi | e | xnumber | fnumber | ident + lpar + expr + rpar | ident
+    atom_action = atom_parts.setParseAction(pushFirst)
+    group = Group(lpar + expr + rpar)
+    atom = ((0, None) * minus + atom_action | group).setParseAction(pushUMinus)
+
+    # by defining exponentiation as 'atom [ ^ factor ]...' instead of 'atom [ ^ atom ]...', we get right-to-left exponents, instead of left-to-righ
+    # that is, 2^3^2 = 2^(3^2), not (2^3)^2.
+    factor = Forward()
+    factor << atom + ZeroOrMore((expop + factor).setParseAction(pushFirst))
+
+    term = factor + ZeroOrMore((multop + factor).setParseAction(pushFirst))
+    expr << term + ZeroOrMore((addop + term).setParseAction(pushFirst))
+    return expr
 
 
-def compute_operation(operations, register):
-    """
-    This function compute an operation.
-    @param : operation
-    @type : string
-    @param : register
-    @type Register32
-    """
+# map operator symbols to corresponding arithmetic operations
+epsilon = 1e-12
+opn = { '+' : operator.add,
+        '-' : operator.sub,
+        '*' : operator.mul,
+        '/' : operator.truediv,
+        '^' : operator.pow }
 
-    op = is_an_operator(operations)
-    if op != None:
-        operandes = operations.split(op, 1)
 
-        r = []
-        for o in operandes:
-
-            if is_an_operator(o) != None:
-                r.append(compute_operation(o, register))
-
-            elif o in register.get_list_register():
-                r.append(register.get(o))
-            else:
-                r.append(int(o))
-
-        if op == "+":
-            return r[0] + r[1]
-        elif op == "-":
-            return r[0] - r[1]
-        elif op == "/":
-            return r[0] / r[1]
-        elif op == "*":
-            return r[0] * r[1]
+def evaluateStack(s):
+    op = s.pop()
+    if op == 'unary -':
+        return -evaluateStack(s)
+    if op in '+-*/^':
+        op2 = evaluateStack(s)
+        op1 = evaluateStack(s)
+        return opn[op](op1, op2)
+    elif op == 'PI':
+        return math.pi # 3.1415926535
+    elif op == 'E':
+        return math.e  # 2.718281828
+    elif op[0].isalpha():
+        raise Exception('invalid identifier "%s"' % op)
+    elif op.startswith('0x') or op.startswith('0X'):
+        return int(op, 16)
+    elif '.' in op or 'e' in op or 'E' in op:
+        return float(op)
     else:
-        return None
+        return int(op)
 
-        # vim:ts=4:expandtab:sw=4
+def evaluate(expression, exprStack=None):
+  exprStack = exprStack or []
+  bnf(exprStack).parseString(expression, parseAll=True)
+  return evaluateStack(exprStack[:])
+
+from pyparsing import ParserElement
+
+ParserElement.verbose_stacktrace = False
+
+
+def compute_operation( expVal, register ):
+
+    expVal = expVal.lower()
+    for r in register.get_list_register():
+        if r in expVal:
+            expVal = expVal.replace(r, str(register.get(r)))
+
+    return evaluate(expVal)
+
+
+
+
+# vim:ts=4:expandtab:sw=4

@@ -19,10 +19,11 @@
 @contact:      ivan.fontarensky@cassidian.com
 @organization: Cassidian CyberSecurity
 """
+from traceback import print_stack
 
 __author__ = 'ifontarensky'
 
-import sys
+import sys,traceback
 
 try:
     from distorm3 import Decode
@@ -39,6 +40,7 @@ except ImportError:
     sys.exit(1)
 
 from disass.Register32 import Register32
+from disass.Instruction32 import compute_operation
 from disass.prettyprint import bcolors
 from disass.exceptions import DataNotWin32ApplicationError
 from disass.exceptions import InvalidValueEIP
@@ -172,16 +174,74 @@ class Disass32():
         self.set_position(eip)
 
     def go_to_function(self,name,history=[]):
+        """
+
+        """
         eip = self.register.eip
+
         for d in Decode(eip,self.data_code[eip:eip+0x1000]):
             instruction = d[2]
             offset = d[0]
+
+            history.append(offset)
+
             if name in self.replace_function(instruction):
                 self.set_position(offset)
-
                 return True
+            else:
+                if "CALL" in instruction :
+                    saddr = self.get_function_name(instruction)
+
+                    if "0x" in saddr:
+                        addr = int(saddr,16)
+                        self.set_position(addr)
+                        print "Saute ici : %x" % addr
+
+                        if addr not in history:
+                            self.go_to_function(name, history)
+
+                elif "JMP" in instruction:
+                    saddr = self.get_function_name(instruction)
+                    if "0x" in saddr:
+                        print instruction
+                        saddr = compute_operation(saddr,self.register)
+                        addr = int(str(saddr),16)
+                        self.set_position(addr)
+                        print "Saute ici : %x" % addr
+
+                        if addr not in history:
+                            self.go_to_function(name, history)
+
 
         return False
+
+
+    def extract_address(self, opcode):
+        """
+
+        """
+        try:
+            # Récupération de l'adresse
+            if "CALL" in opcode:
+                if "CALL DWORD" in opcode:
+                    saddr = opcode.split(' ')[2]
+                else:
+                    saddr = opcode.split(' ')[1]
+                return saddr
+
+            elif "JMP" in opcode:
+                if "JMP DWORD" in opcode:
+                    saddr = opcode.split(' ')[2]
+                else:
+                    saddr = opcode.split(' ')[1]
+                return saddr
+
+            else:
+                return ''
+        except:
+            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't extract address : '%s' found " % (opcode) + bcolors.ENDC
+            return ''
+
 
 
     def get_function_name(self,opcode=None,saddr=None):
@@ -194,30 +254,15 @@ class Disass32():
         if opcode!=None:
 
             try:
-                # Récupération de l'adresse
-                if "CALL" in opcode:
-                    if "CALL DWORD" in opcode:
-                        saddr = opcode.split(' ')[2]
-                    else:
-                        saddr = opcode.split(' ')[1]
+                saddr = self.extract_address(opcode)
 
-                elif "JMP" in opcode:
-                    if "JMP DWORD" in opcode:
-                        saddr = opcode.split(' ')[2]
-                    else:
-                        saddr = opcode.split(' ')[1]
-                elif "MOV " in opcode:
-                    if "MOV DWORD" in opcode:
-                        saddr = opcode.split(' ')[3]
-                    else:
-                        saddr = opcode.split(' ')[2]
-                    if self.is_register(saddr):
-                        return saddr
-                else:
-                    return ''
             except:
                 print >> sys.stderr, bcolors.FAIL + "\tErreur: Decomposition not possible : '%s' found in %s" % (saddr,opcode) + bcolors.ENDC
                 return saddr
+
+            if saddr == '':
+                return opcode
+
 
             saddr2 = saddr
             if '[' in saddr:
@@ -242,9 +287,9 @@ class Disass32():
             except Exception as e:
                 print >> sys.stderr, bcolors.FAIL + "\tErreur: Convertion not possible : '%s' found in %s" % (saddr2,opcode) + bcolors.ENDC
                 print >> sys.stderr, str(e)
-                return saddr
-
-
+                return opcode
+        else:
+            return opcode
 
     def print_assembly(self,start=-0x20,nb_instruction=0x20):
         """
@@ -281,17 +326,10 @@ class Disass32():
             elif "JMP" in instruction:
                 return "JMP %s" % (bcolors.HEADER + self.get_function_name(instruction) + bcolors.ENDC)
 
-            elif "MOV " in instruction:
-                dest = instruction.split(' ')[1]
-                src = instruction.split(' ')[2]
-                if not self.is_register(src):
-                    return "MOV %s %s" % (dest,bcolors.HEADER + self.get_function_name(instruction) + bcolors.ENDC)
-                else:
-                    return "%s" % (instruction)
             else:
                 return "%s" % (instruction)
         except Exception as e:
-            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't decompose this opcode '%s'" % instruction + bcolors.ENDC
+            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't replace name this opcode '%s'" % instruction + bcolors.ENDC
             raise e
 
     def print_instruction(self, offset, code, instruction):
@@ -309,7 +347,6 @@ class Disass32():
         except Exception as e:
             print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't print this instructrion '%s:%s'" % (offset, instruction) + bcolors.ENDC
             raise e
-
 
     def next(self):
         """
