@@ -51,13 +51,11 @@ class Disass32():
     """
     def __init__(self,path=None,data=None,verbose=False):
 
+        self.verbose = verbose
         self.register = Register32()
         self.stack = list()
+        self.map_cal = dict()
         self.load_win32_pe(path=path,data=data)
-        self.verbose = verbose
-
-        if verbose:
-            self.print_assembly()
 
 
     def load_win32_pe(self,path=None,data=None):
@@ -159,33 +157,27 @@ class Disass32():
 
         self.register.eip = pos
         eip = self.register.eip
-        ep = self.get_entry_point()
-        if ep > eip-0x40:
-            self.decode = Decode(ep, self.data_code[ep:ep+0x1000])
-        else:
-            self.decode = Decode(eip-0x40, self.data_code[eip-0x40:eip+0x1000])
 
+        self.decode = Decode(eip, self.data_code[eip:eip+0x1000])
 
-    def jump(self,value):
-        """
-        @param value: Skip value instructions.
-        @type value: int
-        """
-        eip=self.decode[value:value+1][0][0]
-        self.set_position(eip)
+        if self.verbose:
+            self.print_assembly()
+
 
     def go_to_function(self,name,offset=0,history=[],indent=1):
         """
 
         """
-        eip = self.register.eip
+
         if offset==0:
-            #print "(eip)",hex(eip)
+            eip = self.register.eip
             offset = eip
+            self.stack = []
+        bakstack = self.stack
 
 
 
-        for d in Decode(offset,self.data_code[offset:offset+0x300000]):
+        for d in Decode(offset,self.data_code[offset:offset+0x1000]):
             instruction = d[2]
             offset = d[0]
 
@@ -193,8 +185,7 @@ class Disass32():
 
             if name in self.replace_function(instruction):
                 self.set_position(offset)
-                if self.verbose:
-                    self.print_assembly()
+
                 return True
             else:
                 if 'RET' in instruction:
@@ -223,14 +214,11 @@ class Disass32():
 
                         if addr not in history:
                             self.stack.append(offset)
-                            #print "(0x%x)"%offset," "*indent, ' ',instruction
-                            self.go_to_function(name, addr, history, indent+1)
-                        else:
-                            print 'deja vu',instruction
+                            self.map_cal[addr]="CALL_%s" % addr
+                            if self.go_to_function(name, addr, history, indent+1):
+                                return True
 
-
-
-        #print " "*indent, ' --> not found'
+        self.stack = bakstack
         return False
 
 
@@ -316,23 +304,24 @@ class Disass32():
         else:
             return opcode
 
-    def print_assembly(self,start=-0x20,nb_instruction=0x20):
+    def print_assembly(self,start=0,nb_instruction=0x20):
         """
         TODO:
         """
-        if self.get_entry_point()==self.register.eip:
-            print "\t-------------- ENTRYPOINT -------------"
 
-        ep = self.get_entry_point()
-        if ep > self.register.eip-0x40:
-            s = 0
-            e = nb_instruction
-        else:
-            s = start+0x20
-            e = start+0x20+nb_instruction
+        n = nb_instruction
+        eip = self.register.eip
 
-        for b in self.decode[s:e]:
-            self.print_instruction(b[0], b[3], b[2])
+        position = 0
+
+
+        dec = self.decode[position:position+n]
+
+        nn = 0
+        for b in dec:
+            self.print_instruction(nn,b[0], b[3], b[2])
+            nn +=1
+        print ""
 
     def replace_function(self, instruction):
         """
@@ -357,13 +346,17 @@ class Disass32():
             print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't replace name this opcode '%s'" % instruction + bcolors.ENDC
             raise e
 
-    def print_instruction(self, offset, code, instruction):
+    def print_instruction(self,nn, offset, code, instruction):
         """
         Print instruction in arguments
         @param : offset
         @param : code
         @param : instruction
         """
+        if self.get_entry_point() == offset:
+            print "\t-------------- ENTRYPOINT -------------"
+        if  offset in self.map_cal:
+            print "\t %s%s%s" % (bcolors.OKGREEN,self.map_cal[offset],bcolors.ENDC)
         try:
             if offset == self.register.eip:
                 print "\t%s%s%s%04x : %15s : %s%s%s%s" % (bcolors.BGGREEN, bcolors.BOLD, bcolors.FGBLACK, offset, code, self.replace_function(instruction), bcolors.ENDC, bcolors.ENDC, bcolors.ENDC)

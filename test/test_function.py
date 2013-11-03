@@ -148,30 +148,6 @@ class Test_Function_Disass32(object):
         assert False
         return
 
-    def test_position_jump_value(self):
-        """
-        Test de l'initialisation du moteur disass 32
-        """
-        from test.minjat.f1 import data
-        from disass.exceptions import InvalidValueEIP
-        try:
-            disass = Disass32(data=b64decode(data))
-        except:
-            assert False
-            return
-
-        value = 0x20
-        b = disass.decode[value:value+1]
-
-        disass.jump(value)
-
-        if disass.register.eip == b[0][0]:
-            assert True
-            return
-
-        assert False
-        return
-
     @pytest.mark.parametrize("value", ['[EBP-0x14]','[EBP+0x14]','[EIP]','[CS:0x254]','[CS:DS]'])
     def test_is_register(self,value):
         """
