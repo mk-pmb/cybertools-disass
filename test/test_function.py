@@ -341,7 +341,7 @@ class Test_Function_Disass32(object):
             return
 
         addr = disass.replace_function(value[0])
-        print addr,value[1]
+        print addr, value[1]
         if addr == value[1]:
             assert True
             return
@@ -349,7 +349,7 @@ class Test_Function_Disass32(object):
         assert False
         return
 
-    @pytest.mark.parametrize("value", ['GetVersion','GetCommandLine','CreateThread'])
+    @pytest.mark.parametrize("value", ['GetVersion', 'GetCommandLine', 'CreateThread'])
     def test_go_to_function(self,value):
         """
         Test de l'initialisation du moteur disass 32
@@ -369,6 +369,8 @@ class Test_Function_Disass32(object):
 
         assert False
         return
+
+
 
     @pytest.mark.parametrize("value", [(0,"0"),(6,"0"),(26,"20"),(99,"40")])
     def test_where_am_i(self,value):
@@ -456,7 +458,8 @@ class Test_Function_Disass32(object):
         assert False
 
 
-    def test_get_args(self):
+    @pytest.mark.parametrize("value", ['GetCommandLine'])
+    def test_get_args(self, value):
         """
         Test de l'initialisation du moteur disass 32
         """
@@ -468,8 +471,9 @@ class Test_Function_Disass32(object):
             assert False
             return
 
-
-        disass.go_to_function('CreateThread')
+        if not disass.go_to_function(value):
+            assert False
+            return
 
         args = disass.get_arguments()
 
@@ -477,9 +481,7 @@ class Test_Function_Disass32(object):
             assert False
             return
 
-        print args
-
-        assert False
+        assert True
         return
 
 

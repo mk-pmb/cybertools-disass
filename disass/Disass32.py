@@ -46,21 +46,62 @@ from disass.exceptions import DataNotWin32ApplicationError
 from disass.exceptions import InvalidValueEIP
 from disass.exceptions import FunctionNameNotFound
 
+history_cmd_to_script = list()
+
+def script(funct_to_script):
+
+
+    def wrapper_around_function(*args, **kwargs):
+
+        # Execute before execution, save command
+        history_cmd_to_script.append((funct_to_script.__name__, args[1:]))
+
+        # Call function
+        res = funct_to_script(*args, **kwargs)
+
+        # Execute after execution, save result
+        return res
+
+    return wrapper_around_function
+
+def make_script():
+    s='''
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from disass.Disass32 import Disass32
+
+    '''
+    for hist in history_cmd_to_script:
+        func = hist[0]
+        if func == 'go_to_function':
+            s += '''
+if not disass.%s(%s):
+    return
+            ''' % (func, hist[1])
+        else:
+            s += 'disass.%s(%s):\n' % (func, hist[1])
+
+    print s
+
+
+
 class Disass32():
     """
     Detect all executable
     """
-    def __init__(self,path=None,data=None,verbose=False):
+    @script
+    def __init__(self, path=None, data=None, verbose=False):
 
         self.verbose = verbose
         self.register = Register32()
 
         self.map_call = dict()
         self.map_call_by_addr = dict()
-        self.load_win32_pe(path=path,data=data)
+        self.load_win32_pe(path=path, data=data)
 
 
-    def load_win32_pe(self,path=None,data=None):
+    def load_win32_pe(self, path=None, data=None):
         """
         TODO:
         """
@@ -168,8 +209,12 @@ class Disass32():
         if self.verbose:
             self.print_assembly()
 
+    @script
+    def go_to_function(self, name, offset=0):
+        return self.__go_to_function(name, offset)
 
-    def go_to_function(self,name,offset=0,history=[],indent=1):
+
+    def __go_to_function(self, name, offset, history=[], indent=1):
         """
 
         """
@@ -177,12 +222,9 @@ class Disass32():
         if offset==0:
             eip = self.register.eip
             offset = eip
-            self.stack = []
-        bakstack = self.stack
 
 
-
-        for d in Decode(offset,self.data_code[offset:offset+0x1000]):
+        for d in Decode(offset, self.data_code[offset:offset+0x1000]):
             instruction = d[2]
             offset = d[0]
 
@@ -194,7 +236,6 @@ class Disass32():
                 return True
             else:
                 if 'RET' in instruction:
-                    ret = self.stack.pop()
                     return False
 
                 if "CALL" in instruction :
@@ -217,14 +258,12 @@ class Disass32():
                             continue
 
                         if addr not in history:
-                            self.stack.append(offset)
                             if addr not in self.map_call:
                                 self.map_call[addr] = "CALL_%x" % addr
                                 self.map_call_by_addr["CALL_%x" % addr] = addr
-                            if self.go_to_function(name, addr, history, indent+1):
+                            if self.__go_to_function(name, addr, history, indent+1):
                                 return True
 
-        self.stack = bakstack
         return False
 
 
@@ -448,6 +487,13 @@ class Disass32():
             raise FunctionNameNotFound
 
 
+    def get_instruction(self,offset=None):
+        if offset == None:
+            offset = self.register.eip
+
+        return Decode(offset, self.data_code[offset:offset+0x20])[0][2]
+
+    @script
     def get_arguments(self, offset=None):
         """
 
@@ -469,8 +515,13 @@ class Disass32():
         for d in Decode(addr, self.data_code[addr:addr+(offset-addr)]):
             if "PUSH" in d[2]:
                 svalue = self.extract_value(d[2])
-                print svalue
-                svalue = compute_operation(svalue, self.register)
+
+                if '[' in svalue:
+                    svalue = svalue[1:-1]
+                    svalue = compute_operation(svalue, self.register)
+                    svalue = "[%s]" % svalue
+                else:
+                    svalue = compute_operation(svalue, self.register)
                 stack.append(svalue)
 
             elif "POP" in d[2]:
@@ -481,6 +532,9 @@ class Disass32():
             elif "CALL" in d[2]:
                 stack=list()
 
+        stack.reverse()
         return stack
+
+
 
 # vim:ts=4:expandtab:sw=4
