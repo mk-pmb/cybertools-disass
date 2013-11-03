@@ -130,9 +130,11 @@ ParserElement.verbose_stacktrace = False
 def compute_operation( expVal, register ):
 
     expVal = expVal.lower()
+
     for r in register.get_list_register():
         if r in expVal:
             expVal = expVal.replace(r, str(register.get(r)))
+
 
     return evaluate(expVal)
 

@@ -44,6 +44,7 @@ from disass.Instruction32 import compute_operation
 from disass.prettyprint import bcolors
 from disass.exceptions import DataNotWin32ApplicationError
 from disass.exceptions import InvalidValueEIP
+from disass.exceptions import FunctionNameNotFound
 
 class Disass32():
     """
@@ -53,8 +54,9 @@ class Disass32():
 
         self.verbose = verbose
         self.register = Register32()
-        self.stack = list()
-        self.map_cal = dict()
+
+        self.map_call = dict()
+        self.map_call_by_addr = dict()
         self.load_win32_pe(path=path,data=data)
 
 
@@ -81,7 +83,10 @@ class Disass32():
         self.get_list_exported_symbols()
         self.decode = None
         self.data_code = self.pe.get_memory_mapped_image()
-        self.set_position(self.get_entry_point())
+        ep = self.get_entry_point()
+        self.map_call[ep]="Entrypoint"
+        self.map_call_by_addr["Entrypoint"] = ep
+        self.set_position(ep)
 
 
     def get_list_imported_symbols(self):
@@ -208,13 +213,14 @@ class Disass32():
                             continue
                         addr = saddr
 
-
                         if addr in history:
                             continue
 
                         if addr not in history:
                             self.stack.append(offset)
-                            self.map_cal[addr]="CALL_%s" % addr
+                            if addr not in self.map_call:
+                                self.map_call[addr] = "CALL_%x" % addr
+                                self.map_call_by_addr["CALL_%x" % addr] = addr
                             if self.go_to_function(name, addr, history, indent+1):
                                 return True
 
@@ -255,6 +261,31 @@ class Disass32():
             print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't extract address : '%s' found " % (opcode) + bcolors.ENDC
             return ''
 
+    def extract_value(self, opcode):
+        """
+
+        """
+        try:
+            # Récupération de l'adresse
+            if "PUSH" in opcode:
+                if "PUSH DWORD" in opcode:
+                    saddr = opcode.split(' ')[2]
+                else:
+                    saddr = opcode.split(' ')[1]
+                return saddr
+
+            elif "POP" in opcode:
+                if "POP DWORD" in opcode:
+                    saddr = opcode.split(' ')[2]
+                else:
+                    saddr = opcode.split(' ')[1]
+                return saddr
+
+            else:
+                return ''
+        except:
+            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't extract value : '%s' found " % (opcode) + bcolors.ENDC
+            return ''
 
 
     def get_function_name(self,opcode=None,saddr=None):
@@ -314,8 +345,12 @@ class Disass32():
 
         position = 0
 
-
         dec = self.decode[position:position+n]
+
+        if dec[0][0] not in self.map_call:
+            offset = dec[0][0]
+            print "\t %s%s%s" % (bcolors.OKGREEN, self.where_am_i(offset=offset), bcolors.ENDC)
+            print '\t [...]'
 
         nn = 0
         for b in dec:
@@ -353,10 +388,8 @@ class Disass32():
         @param : code
         @param : instruction
         """
-        if self.get_entry_point() == offset:
-            print "\t-------------- ENTRYPOINT -------------"
-        if  offset in self.map_cal:
-            print "\t %s%s%s" % (bcolors.OKGREEN,self.map_cal[offset],bcolors.ENDC)
+        if offset in self.map_call:
+            print "\t %s%s%s" % (bcolors.OKGREEN,self.map_call[offset],bcolors.ENDC)
         try:
             if offset == self.register.eip:
                 print "\t%s%s%s%04x : %15s : %s%s%s%s" % (bcolors.BGGREEN, bcolors.BOLD, bcolors.FGBLACK, offset, code, self.replace_function(instruction), bcolors.ENDC, bcolors.ENDC, bcolors.ENDC)
@@ -388,5 +421,66 @@ class Disass32():
 
         if self.verbose:
             self.print_assembly()
+
+    def where_am_i(self, offset=None):
+        if offset == None:
+            offset = self.register.eip
+
+        data = self.map_call
+
+        if offset in data:
+            return data[offset]
+        else:
+            return data[offset] if offset in data else data[min(data.keys(), key=lambda k: abs(offset-k if offset-k>0 else k ))]
+
+
+    def rename_function(self, old_name, new_name):
+        """
+        @param old_name
+        @param new_name
+        """
+        if old_name in self.map_call_by_addr:
+            addr = self.map_call_by_addr[old_name]
+            self.map_call[addr] = new_name
+            self.map_call_by_addr[new_name] = addr
+            del self.map_call_by_addr[old_name]
+        else:
+            raise FunctionNameNotFound
+
+
+    def get_arguments(self, offset=None):
+        """
+
+        """
+        if offset == None:
+            offset = self.register.eip
+
+        # Am I on a function ?
+
+        instruction = Decode(offset, self.data_code[offset:offset+0x50])[0][2]
+        if "CALL" in instruction:
+            functionname = self.where_am_i(offset)
+        else:
+            return None
+
+        addr = self.map_call_by_addr[functionname]
+
+        stack = list()
+        for d in Decode(addr, self.data_code[addr:addr+(offset-addr)]):
+            if "PUSH" in d[2]:
+                svalue = self.extract_value(d[2])
+                print svalue
+                svalue = compute_operation(svalue, self.register)
+                stack.append(svalue)
+
+            elif "POP" in d[2]:
+                svalue = self.extract_value(d[2])
+                svalue = compute_operation(svalue, self.register)
+                stack.append(svalue)
+
+            elif "CALL" in d[2]:
+                stack=list()
+
+        return stack
 
 # vim:ts=4:expandtab:sw=4

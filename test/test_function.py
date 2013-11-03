@@ -308,7 +308,7 @@ class Test_Function_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         from test.minjat.f1 import data
-        from disass.exceptions import InvalidValueEIP
+
         try:
             disass = Disass32(data=b64decode(data))
         except:
@@ -333,7 +333,7 @@ class Test_Function_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         from test.minjat.f1 import data
-        from disass.exceptions import InvalidValueEIP
+
         try:
             disass = Disass32(data=b64decode(data))
         except:
@@ -355,7 +355,7 @@ class Test_Function_Disass32(object):
         Test de l'initialisation du moteur disass 32
         """
         from test.minjat.f1 import data
-        from disass.exceptions import InvalidValueEIP
+
         try:
             disass = Disass32(data=b64decode(data))
         except:
@@ -369,5 +369,118 @@ class Test_Function_Disass32(object):
 
         assert False
         return
+
+    @pytest.mark.parametrize("value", [(0,"0"),(6,"0"),(26,"20"),(99,"40")])
+    def test_where_am_i(self,value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+        disass.register.eip = value[0]
+
+        disass.map_call[100]="100"
+        disass.map_call[0]="0"
+        disass.map_call[10]="10"
+        disass.map_call[30]="30"
+        disass.map_call[40]="40"
+        disass.map_call[20]="20"
+
+
+        if disass.where_am_i() == value[1]:
+            assert True
+            return
+
+        assert False
+
+    @pytest.mark.parametrize("value", [(0,"0"),(6,"0"),(26,"20"),(99,"40")])
+    def test_where_am_i(self,value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+
+        disass.map_call[100]="100"
+        disass.map_call[0]="0"
+        disass.map_call[10]="10"
+        disass.map_call[30]="30"
+        disass.map_call[40]="40"
+        disass.map_call[20]="20"
+
+
+        if disass.where_am_i(offset=value[0]) == value[1]:
+            assert True
+            return
+
+        assert False
+
+    @pytest.mark.parametrize("value", [(0,"0"),(6,"0"),(26,"20"),(99,"40")])
+    def test_where_am_i(self,value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+
+        disass.rename_function('Entrypoint',"hopla")
+
+        try :
+            addr = disass.map_call_by_addr["hopla"]
+            name = disass.map_call[addr]
+        except:
+            assert False
+
+        if name == "hopla":
+            assert True
+            return
+
+        assert False
+
+
+    def test_get_args(self):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+
+        disass.go_to_function('CreateThread')
+
+        args = disass.get_arguments()
+
+        if args == None:
+            assert False
+            return
+
+        print args
+
+        assert False
+        return
+
 
 # vim:ts=4:expandtab:sw=4

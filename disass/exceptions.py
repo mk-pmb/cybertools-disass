@@ -37,7 +37,7 @@ class DataNotWin32ApplicationError(DisassException):
 class InvalidValueEIP(DisassException):
     """Exception for gracefully not saving Relative URLs in the cache"""
 
-class SanityCheckException(DisassException):
+class FunctionNameNotFound(DisassException):
     """Exception for failed sanity checks (which can potentially be disabled)"""
 
 # vim:ts=4:expandtab:sw=4

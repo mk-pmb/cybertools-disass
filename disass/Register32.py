@@ -60,7 +60,7 @@ class Register32(object):
         self._fs = 0
         self._gs = 0
         self._ss = 0
-        self._bp = 0
+        self._ebp = 0
 
     def _set_eax(self,v):
         self._eax = v&0xffffffff
@@ -242,6 +242,13 @@ class Register32(object):
     def _set_ss(self,v):
         self._ss = (v & 0x0000ffff)
 
+    def _get_ebp(self):
+        return (self._ebp)
+
+    def _set_ebp(self,v):
+        self._bp = (v & 0xffffffff)
+
+
     def _get_bp(self):
         return (self._bp & 0x0000ffff)
 
@@ -339,6 +346,8 @@ class Register32(object):
     fs = property(_get_fs, _set_fs,doc='read/write registry fs')
     gs = property(_get_gs, _set_gs,doc='read/write registry gs')
     ss = property(_get_ss, _set_ss,doc='read/write registry ss')
+
+    ebp = property(_get_ebp, _set_ebp,doc='read/write registry ebp')
     bp = property(_get_bp, _set_bp,doc='read/write registry bp')
 
 
