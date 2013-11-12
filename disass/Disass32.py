@@ -23,7 +23,7 @@ from traceback import print_stack
 
 __author__ = 'ifontarensky'
 
-import sys,traceback
+import sys, traceback
 
 try:
     from distorm3 import Decode
@@ -71,16 +71,21 @@ def make_script():
 
 from disass.Disass32 import Disass32
 
-    '''
+'''
+
     for hist in history_cmd_to_script:
         func = hist[0]
+
+
         if func == 'go_to_function':
             s += '''
 if not disass.%s(%s):
     return
-            ''' % (func, hist[1])
+
+''' % (func, hist[1])
         else:
-            s += 'disass.%s(%s):\n' % (func, hist[1])
+            s += '''
+disass.%s(%s)''' % (func, hist[1])
 
     print s
 
@@ -211,15 +216,15 @@ class Disass32():
 
     @script
     def go_to_function(self, name, offset=0):
-        return self.__go_to_function(name, offset)
+        return self._go_to_function(name, offset, [])
 
 
-    def __go_to_function(self, name, offset, history=[], indent=1):
+    def _go_to_function(self, name, offset, history=[], indent=1):
         """
 
         """
 
-        if offset==0:
+        if offset == 0:
             eip = self.register.eip
             offset = eip
 
@@ -232,37 +237,35 @@ class Disass32():
 
             if name in self.replace_function(instruction):
                 self.set_position(offset)
-
                 return True
-            else:
-                if 'RET' in instruction:
-                    return False
 
-                if "CALL" in instruction :
-                    saddr = self.get_function_name(instruction)
+            if 'RET' in instruction:
+                return False
 
-                    if "0x" in saddr:
-                        if '[' in saddr:
-                            continue
-                        if ':' in saddr:
-                            continue
+            if "CALL" in instruction :
+                address_expression = self.get_function_name(instruction)
 
-                        try:
-                            saddr = compute_operation(saddr, self.register)
-                        except Exception as e:
-                            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't eval instruction'%s'" % instruction + bcolors.ENDC
-                            continue
-                        addr = saddr
+                if "0x" in address_expression:
+                    if '[' in address_expression:
+                        continue
+                    if ':' in address_expression:
+                        continue
 
-                        if addr in history:
+                    try:
+                        address = compute_operation(address_expression, self.register)
+
+                        if address in history:
                             continue
 
-                        if addr not in history:
-                            if addr not in self.map_call:
-                                self.map_call[addr] = "CALL_%x" % addr
-                                self.map_call_by_addr["CALL_%x" % addr] = addr
-                            if self.__go_to_function(name, addr, history, indent+1):
-                                return True
+                        if address not in self.map_call:
+                            self.map_call[address] = "CALL_%x" % address
+                            self.map_call_by_addr["CALL_%x" % address] = address
+
+                        if self._go_to_function(name, address, history, indent+1):
+                            return True
+
+                    except Exception as e:
+                        print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't eval instruction'%s'" % instruction + bcolors.ENDC
 
         return False
 

@@ -349,6 +349,23 @@ class Test_Function_Disass32(object):
         assert False
         return
 
+
+    def test_go_to_function_Create2times(self):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+
+        disass = Disass32(data=b64decode(data))
+        disass2 = Disass32(data=b64decode(data))
+
+        disass.go_to_function('CreateThread')
+
+        if not disass2.go_to_function('CreateThread'):
+            assert False
+        assert True
+
     @pytest.mark.parametrize("value", ['GetVersion', 'GetCommandLine', 'CreateThread'])
     def test_go_to_function(self,value):
         """
@@ -373,7 +390,7 @@ class Test_Function_Disass32(object):
 
 
     @pytest.mark.parametrize("value", [(0,"0"),(6,"0"),(26,"20"),(99,"40")])
-    def test_where_am_i(self,value):
+    def test_where_am_i(self, value):
         """
         Test de l'initialisation du moteur disass 32
         """
@@ -402,7 +419,7 @@ class Test_Function_Disass32(object):
         assert False
 
     @pytest.mark.parametrize("value", [(0,"0"),(6,"0"),(26,"20"),(99,"40")])
-    def test_where_am_i(self,value):
+    def test_where_am_i(self, value):
         """
         Test de l'initialisation du moteur disass 32
         """
@@ -430,7 +447,7 @@ class Test_Function_Disass32(object):
         assert False
 
     @pytest.mark.parametrize("value", [(0,"0"),(6,"0"),(26,"20"),(99,"40")])
-    def test_where_am_i(self,value):
+    def test_where_am_i(self, value):
         """
         Test de l'initialisation du moteur disass 32
         """
@@ -456,6 +473,11 @@ class Test_Function_Disass32(object):
             return
 
         assert False
+
+
+
+
+
 
 
     @pytest.mark.parametrize("value", ['GetCommandLine'])
