@@ -72,7 +72,7 @@ def make_script():
 from disass.Disass32 import Disass32
 
 '''
-
+    print history_cmd_to_script
     for hist in history_cmd_to_script:
         func = hist[0]
 

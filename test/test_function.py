@@ -474,12 +474,6 @@ class Test_Function_Disass32(object):
 
         assert False
 
-
-
-
-
-
-
     @pytest.mark.parametrize("value", ['GetCommandLine'])
     def test_get_args(self, value):
         """
@@ -506,5 +500,29 @@ class Test_Function_Disass32(object):
         assert True
         return
 
+    def test_script(self):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+
+
+        if not disass.go_to_function("CreateThread"):
+            assert False
+
+        startAddress = disass.get_arguments()[2]
+        if startAddress == 0:
+            assert False
+
+        disass.set_position(startAddress)
+
+        disass.print_assembly()
+
+        assert True
 
 # vim:ts=4:expandtab:sw=4
