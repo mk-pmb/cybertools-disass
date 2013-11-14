@@ -99,7 +99,7 @@ class Disass32():
     def __init__(self, path=None, data=None, verbose=False):
 
         self.verbose = verbose
-        self.register = Register32()
+        self.register = Register32(self)
 
         self.map_call = dict()
         self.map_call_by_addr = dict()
@@ -171,8 +171,15 @@ class Disass32():
         """
         return  not (self.pe.FILE_HEADER.Characteristics & 0x2000)
 
-    def is_register(self,value):
+    def is_register(self, value):
+        """
+        Check if a value is in registeraddress = self.extract_address(instruction)
+            if address != '' and '[' in address:
+        @param value
+        """
         v = value.lower()
+
+        v=v.replace('call', '')
 
         if (v in self.register.get_list_register()):
             return True
@@ -218,6 +225,13 @@ class Disass32():
     def go_to_function(self, name, offset=0):
         return self._go_to_function(name, offset, [])
 
+    @script
+    def go_to_instruction(self, instruction, offset=0):
+        return self._go_to_instruction(instruction, offset, [])
+
+    @script
+    def go_to_next_call(self, name, offset=0):
+        return self._go_to_next_call(name, offset, [])
 
     def _go_to_function(self, name, offset, history=[], indent=1):
         """
@@ -225,6 +239,7 @@ class Disass32():
         """
 
         if offset == 0:
+            self.next()
             eip = self.register.eip
             offset = eip
 
@@ -269,6 +284,138 @@ class Disass32():
 
         return False
 
+    def _go_to_instruction(self, instruction_search, offset, history=[], indent=1):
+        """
+
+        """
+
+        if offset == 0:
+            self.next()
+            eip = self.register.eip
+            offset = eip
+
+
+        for d in Decode(offset, self.data_code[offset:offset+0x1000]):
+            instruction = d[2]
+            offset = d[0]
+
+            history.append(offset)
+
+            if instruction_search in instruction:
+                self.set_position(offset)
+                return True
+
+            if 'RET' in instruction:
+                return False
+
+            if "CALL" in instruction :
+                address_expression = self.get_function_name(instruction)
+
+                if "0x" in address_expression:
+                    if '[' in address_expression:
+                        continue
+                    if ':' in address_expression:
+                        continue
+
+                    try:
+                        address = compute_operation(address_expression, self.register)
+
+                        if address in history:
+                            continue
+
+                        if address not in self.map_call:
+                            self.map_call[address] = "CALL_%x" % address
+                            self.map_call_by_addr["CALL_%x" % address] = address
+
+                        if self._go_to_instruction(instruction_search, address, history, indent+1):
+                            return True
+
+                    except Exception as e:
+                        print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't eval instruction'%s'" % instruction + bcolors.ENDC
+
+        return False
+
+    def _go_to_next_call(self, name, offset, history=[], indent=1):
+        """
+
+        """
+
+        if offset == 0:
+            self.next()
+            eip = self.register.eip
+            offset = eip
+
+
+
+        for d in Decode(offset, self.data_code[offset:offset+0x1000]):
+            instruction = d[2]
+            offset = d[0]
+
+            history.append(offset)
+
+            if name in self.replace_function(instruction):
+                self.set_position(offset)
+                return True
+
+            if 'RET' in instruction:
+                return False
+
+            if "CALL" in instruction :
+                address_expression = self.get_function_name(instruction)
+
+                if "0x" in address_expression:
+                    if '[' in address_expression:
+                        continue
+                    if ':' in address_expression:
+                        continue
+
+                    try:
+                        address = compute_operation(address_expression, self.register)
+
+                        if address in history:
+                            continue
+
+                        if address not in self.map_call:
+                            self.map_call[address] = "CALL_%x" % address
+                            self.map_call_by_addr["CALL_%x" % address] = address
+
+                        if self._go_to_next_call(name, address, history, indent+1):
+                            return True
+
+                    except Exception as e:
+                        print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't eval instruction'%s'" % instruction + bcolors.ENDC
+
+                if self.is_register(instruction):
+                    self.update_stack_and_register(offset)
+
+                    value = self.register.get(address_expression.lower())
+                    if value in self.symbols_imported:
+                        if name == self.symbols_imported[value]:
+                            self.set_position(offset)
+                            return True
+
+        return False
+
+
+    def get_value(self, address):
+
+        address = address - self.pe.OPTIONAL_HEADER.ImageBase
+
+        data = self.data_code[address:address+0x100]
+
+        return data
+
+    def get_string(self, data):
+        if data[0].isalpha():
+
+            #is unicode ?
+            if data[1] == '\x00':
+                return str(data.split('\x00\x00')[0].replace('\x00', ''))
+
+            elif data[1].isalpha():
+                return data.split('\x00')[0]
+
+        return None
 
     def extract_address(self, opcode):
         """
@@ -329,7 +476,6 @@ class Disass32():
             print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't extract value : '%s' found " % (opcode) + bcolors.ENDC
             return ''
 
-
     def get_function_name(self,opcode=None,saddr=None):
         """
         @param opcode: Opcode what we want resolv.
@@ -361,9 +507,7 @@ class Disass32():
                 return saddr
 
             try:
-
-                addr = int(saddr2,16)
-
+                addr = int(saddr2, 16)
 
                 if addr in self.symbols_imported:
                     return self.symbols_imported[addr]
@@ -431,12 +575,36 @@ class Disass32():
         @param : instruction
         """
         if offset in self.map_call:
-            print "\t %s%s%s" % (bcolors.OKGREEN,self.map_call[offset],bcolors.ENDC)
+            print "\t %s%s%s" % (bcolors.OKGREEN, self.map_call[offset], bcolors.ENDC)
         try:
             if offset == self.register.eip:
                 print "\t%s%s%s%04x : %15s : %s%s%s%s" % (bcolors.BGGREEN, bcolors.BOLD, bcolors.FGBLACK, offset, code, self.replace_function(instruction), bcolors.ENDC, bcolors.ENDC, bcolors.ENDC)
             else:
-                print "\t%04x : %15s : %s" % (offset, code, self.replace_function(instruction))
+                found = False
+                strva = None
+                last_part = instruction.split(' ')[-1:][0]
+                for r in self.register.get_list_register():
+                    if r in last_part.lower():
+                        found = True
+                try:
+                    if not found:
+                        if '0x' in last_part and len(last_part) == 8 and '[' not in last_part:
+                            address = int(last_part, 16)
+                            value = self.get_value(address)
+                            strva = self.get_string(value)
+
+                        if '0x' in last_part and len(last_part) == 10 and '[' in last_part:
+                            address = int(last_part[1:-1], 16)
+                            strva = "0x%x -> %s"% (address, self.symbols_imported[address])
+                except:
+                    strva = None
+                    pass
+
+                if strva != None:
+                    print "\t%04x : %15s : %s\t\t%s;%s%s" % (offset, code, self.replace_function(instruction), bcolors.OKBLUE, strva, bcolors.ENDC)
+
+                else:
+                    print "\t%04x : %15s : %s" % (offset, code, self.replace_function(instruction))
         except Exception as e:
             print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't print this instructrion '%s:%s'" % (offset, instruction) + bcolors.ENDC
             raise e
@@ -499,23 +667,34 @@ class Disass32():
     @script
     def get_arguments(self, offset=None):
         """
+        Get arguments from a
+        """
+        if offset == None:
+            offset = self.register.eip
 
+        instruction = Decode(offset, self.data_code[offset:offset+0x50])[0][2]
+        if "CALL" not in instruction:
+            return None
+
+        self.update_stack_and_register(offset)
+        return self.stack
+
+
+    def update_stack_and_register(self, offset):
+        """
+        Update Stack and register
         """
         if offset == None:
             offset = self.register.eip
 
         # Am I on a function ?
-
-        instruction = Decode(offset, self.data_code[offset:offset+0x50])[0][2]
-        if "CALL" in instruction:
-            functionname = self.where_am_i(offset)
-        else:
-            return None
+        functionname = self.where_am_i(offset)
 
         addr = self.map_call_by_addr[functionname]
 
-        stack = list()
+        self.stack = list()
         for d in Decode(addr, self.data_code[addr:addr+(offset-addr)]):
+
             if "PUSH" in d[2]:
                 svalue = self.extract_value(d[2])
 
@@ -525,18 +704,58 @@ class Disass32():
                     svalue = "[%s]" % svalue
                 else:
                     svalue = compute_operation(svalue, self.register)
-                stack.append(svalue)
+                self.stack.append(svalue)
 
             elif "POP" in d[2]:
                 svalue = self.extract_value(d[2])
                 svalue = compute_operation(svalue, self.register)
-                stack.append(svalue)
+                self.stack.append(svalue)
 
             elif "CALL" in d[2]:
-                stack=list()
+                self.stack=list()
 
-        stack.reverse()
-        return stack
+            elif "LEAVE" in d[2]:
+                continue
+
+            elif "MOV" in d[2] or "LEA" in d[2]:
+                bloc = d[2].split(' ')
+                if "DWORD" in d[2]:
+                    pass
+                elif "BYTE" in d[2]:
+                    pass
+                else:
+                    bloc = d[2].split(' ')
+
+                    try:
+                        dst = bloc[1][:-1].lower()
+                        src = bloc[2].lower()
+
+                        if '[' in dst:
+                            continue
+                        if ':' in src or ':' in dst:
+                            continue
+
+
+                        if '[' in src:
+                            value_src = compute_operation(src[1:-1], self.register)
+                            self.register.set_address(dst, value_src)
+                        else:
+                            value_src = compute_operation(src, self.register)
+                            self.register.set(dst, value_src)
+
+                    except Exception as e:
+                        print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't update stack and registry '%s'" % (str(e)) + bcolors.ENDC
+                        pass
+
+            elif "XOR" in d[2]:
+                bloc = d[2].split(' ')
+                dst = bloc[1][:-1].lower()
+                src = bloc[2].lower()
+                self.register.set(dst, self.register.get(dst) ^ self.register.get(src))
+
+
+        self.stack.reverse()
+
 
 
 

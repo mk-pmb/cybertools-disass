@@ -1,4 +1,18 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
 
+#############################################################################
+##                                                                         ##
+## This file is part of Disass                                             ##
+##                                                                         ##
+##                                                                         ##
+## Copyright (C) 2013 Cassidian CyberSecurity SAS. All rights reserved.    ##
+## This document is the property of Cassidian SyberSecurity SAS, it may    ##
+## not be circulated without prior licence                                 ##
+##                                                                         ##
+##  Author: Ivan Fontarensky <ivan.fontarensky@cassidian.com>              ##
+##                                                                         ##
+#############################################################################
 
 
 import sys
@@ -148,7 +162,7 @@ class Test_Function_Disass32(object):
         assert False
         return
 
-    @pytest.mark.parametrize("value", ['[EBP-0x14]','[EBP+0x14]','[EIP]','[CS:0x254]','[CS:DS]'])
+    @pytest.mark.parametrize("value", ['[EBP-0x14]','[EBP+0x14]','[EIP]','[CS:0x254]','[CS:DS]','CALL EAX'])
     def test_is_register(self,value):
         """
         Test de l'initialisation du moteur disass 32
@@ -168,6 +182,22 @@ class Test_Function_Disass32(object):
         assert False
         return
 
+    @pytest.mark.parametrize("value", ['CALL [0x14]'])
+    def test_is_not_register(self,value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+        from disass.exceptions import InvalidValueEIP
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+
+        if disass.is_register(value):
+            assert False
+
+        assert True
 
     def test_print_assembly(self):
         """
@@ -500,6 +530,23 @@ class Test_Function_Disass32(object):
         assert True
         return
 
+    def test_get_unicode_value(self):
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+
+        value = disass.get_value(0x41bad8)
+        domain = disass.get_string(value)
+
+        if domain != 'timesofindia.8866.org':
+            print domain
+            assert False
+
+        assert True
+
     def test_script(self):
         """
         Test de l'initialisation du moteur disass 32
@@ -519,9 +566,48 @@ class Test_Function_Disass32(object):
         if startAddress == 0:
             assert False
 
-        disass.set_position(startAddress)
+        disass.set_position(startAddress - disass.pe.OPTIONAL_HEADER.ImageBase)
 
-        disass.print_assembly()
+        disass.go_to_instruction('CALL EBX')
+
+        assert True
+
+    def test_next_call(self):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+
+
+        if not disass.go_to_function("CreateThread"):
+            assert False
+
+        startAddress = disass.get_arguments()[2]
+        if startAddress == 0:
+            assert False
+
+      # CreateThread( ..., ... , ... )
+        startAddress = disass.get_arguments()[2]
+
+        # We set our position in this Thread
+        disass.set_position(startAddress - disass.pe.OPTIONAL_HEADER.ImageBase)
+
+        if not disass.go_to_next_call('lstrcpyW'):
+            assert False
+
+        eip1 = disass.register.eip
+
+        if not disass.go_to_next_call('lstrcpyW'):
+            assert False
+        eip2 = disass.register.eip
+
+        if eip1 == eip2:
+            assert False
 
         assert True
 

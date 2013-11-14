@@ -45,13 +45,19 @@ ESP/SP : Offset mémoire de la pile.\
 
 class Register32(object):
 
-    def __init__(self):
+    def __init__(self, disass = None):
         self._eax = 0
+        self._peax = False
         self._ebx = 0
+        self._pebx = False
         self._ecx = 0
+        self._pecx = False
         self._edx = 0
+        self._pedx = False
         self._edi = 0
+        self._pedi = False
         self._eip = 0
+        self._pesi = False
         self._esi = 0
         self._esp = 0
         self._cs = 0
@@ -61,12 +67,19 @@ class Register32(object):
         self._gs = 0
         self._ss = 0
         self._ebp = 0
+        self._disass = disass
 
     def _set_eax(self,v):
         self._eax = v&0xffffffff
 
     def _get_eax(self):
         return self._eax
+
+    def _set_peax(self,v):
+        self._peax = v
+
+    def _get_peax(self):
+        return self._peax
 
     def _get_ax(self):
         return (self._eax & 0x0000ffff)
@@ -92,6 +105,12 @@ class Register32(object):
     def _get_ebx(self):
         return self._ebx
 
+    def _set_pebx(self,v):
+        self._pebx = v
+
+    def _get_pebx(self):
+        return self._pebx
+
     def _get_bx(self):
         return (self._ebx & 0x0000ffff)
 
@@ -115,6 +134,12 @@ class Register32(object):
 
     def _get_ecx(self):
         return self._ecx
+
+    def _set_pecx(self, v):
+        self._pecx = v
+
+    def _get_pecx(self):
+        return self._pecx
 
     def _get_cx(self):
         return (self._ecx & 0x0000ffff)
@@ -140,13 +165,19 @@ class Register32(object):
     def _get_edx(self):
         return self._edx
 
+    def _set_pedx(self, v):
+        self._pedx = v
+
+    def _get_pedx(self):
+        return self._pedx
+
     def _get_dx(self):
         return (self._edx & 0x0000ffff)
 
-    def _set_dx(self,v):
+    def _set_dx(self, v):
         self._edx = (self._edx & 0xffff0000) + (v & 0x0000ffff)
 
-    def _set_dh(self,v):
+    def _set_dh(self, v):
         self._edx = (self._edx & 0xffff00ff) + ( v << 8 )
 
     def _get_dh(self):
@@ -163,6 +194,12 @@ class Register32(object):
 
     def _get_edi(self):
         return self._edi
+
+    def _set_pedi(self, v):
+        self._pedi = v
+
+    def _get_pedi(self):
+        return self._pedi
 
     def _get_di(self):
         return (self._edi & 0x0000ffff)
@@ -187,6 +224,12 @@ class Register32(object):
 
     def _get_esi(self):
         return self._esi
+
+    def _set_pesi(self, v):
+        self._pesi = v
+
+    def _get_pesi(self):
+        return self._pesi
 
     def _get_si(self):
         return (self._esi & 0x0000ffff)
@@ -263,6 +306,29 @@ class Register32(object):
         else:
             return None
 
+    def set(self, r, v):
+        """
+        Set value to a registry
+        """
+        if hasattr(self, r):
+            setattr(self, r, v)
+
+        if hasattr(self, "p"+r):
+            setattr(self, "p"+r, False)
+
+
+
+    def set_address(self, r, address):
+        """
+        Set address to a registry
+        """
+        if hasattr(self, r):
+            setattr(self, r, address)
+
+        if hasattr(self, "p"+r):
+            setattr(self, "p"+r, True)
+
+
     def get_list_register(self):
         """
 
@@ -293,47 +359,82 @@ class Register32(object):
 
     def __repr__(self):
         r =  "    Register            Segments\n"
-        r += "------------------------------------ \n"
-        r += "%s(EAX)%s 0x%08x    | %s(CS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.eax, bcolors.HEADER, bcolors.ENDC, self.cs)
-        r += "%s(EBX)%s 0x%08x    | %s(DS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ebx, bcolors.HEADER, bcolors.ENDC, self.ds)
-        r += "%s(ECX)%s 0x%08x    | %s(ES)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ecx, bcolors.HEADER, bcolors.ENDC, self.es)
-        r += "%s(EDX)%s 0x%08x    | %s(FS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.edx, bcolors.HEADER, bcolors.ENDC, self.fs)
-        r += "                    | %s(GS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.gs)
-        r += "%s(EDI)%s 0x%08x    | %s(SS)%s 0x%04x\n" %  (bcolors.HEADER, bcolors.ENDC, self.edi, bcolors.HEADER, bcolors.ENDC, self._ss)
-        r += "%s(EIP)%s 0x%08x    | %s(EBP)%s 0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.eip, bcolors.HEADER, bcolors.ENDC, self.ebp)
-        r += "%s(ESI)%s 0x%08x\n" % (bcolors.HEADER,bcolors.ENDC,self.esi)
-        r += "%s(ESP)%s 0x%08x\n" % (bcolors.HEADER,bcolors.ENDC,self.esp)
+        r += "------------------------------------- \n"
+        if self.peax:
+            r += "%s(EAX)%s [0x%08x]     | %s(CS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.eax, bcolors.HEADER, bcolors.ENDC, self.cs)
+        else:
+            r += "%s(EAX)%s  0x%08x      | %s(CS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.eax, bcolors.HEADER, bcolors.ENDC, self.cs)
+        if self.pebx:
+            r += "%s(EBX)%s [0x%08x]     | %s(DS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ebx, bcolors.HEADER, bcolors.ENDC, self.ds)
+            if self.ebx in self._disass.symbols_imported:
+                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.ebx], bcolors.ENDC)
+        else:
+            r += "%s(EBX)%s  0x%08x      | %s(DS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ebx, bcolors.HEADER, bcolors.ENDC, self.ds)
+        if self.pecx:
+            r += "%s(ECX)%s [0x%08x]     | %s(ES)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ecx, bcolors.HEADER, bcolors.ENDC, self.es)
+            if self.ecx in self._disass.symbols_imported:
+                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.ecx], bcolors.ENDC)
+        else:
+            r += "%s(ECX)%s  0x%08x      | %s(ES)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ecx, bcolors.HEADER, bcolors.ENDC, self.es)
+
+        if self.pedx:
+            r += "%s(EDX)%s [0x%08x]     | %s(FS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.edx, bcolors.HEADER, bcolors.ENDC, self.fs)
+            if self.edx in self._disass.symbols_imported:
+                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.edx], bcolors.ENDC)
+        else:
+            r += "%s(EDX)%s  0x%08x      | %s(FS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.edx, bcolors.HEADER, bcolors.ENDC, self.fs)
+        r += "                       | %s(GS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.gs)
+        r += "%s(EIP)%s  0x%08x      | %s(EBP)%s 0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.eip, bcolors.HEADER, bcolors.ENDC, self.ebp)
+        if self.pedi:
+            r += "%s(EDI)%s [0x%08x]     | %s(SS)%s 0x%04x\n" %  (bcolors.HEADER, bcolors.ENDC, self.edi, bcolors.HEADER, bcolors.ENDC, self._ss)
+            if self.edi in self._disass.symbols_imported:
+                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.edi], bcolors.ENDC)
+        else:
+            r += "%s(EDI)%s  0x%08x      | %s(SS)%s 0x%04x\n" % (bcolors.HEADER, bcolors.ENDC, self.edi, bcolors.HEADER, bcolors.ENDC, self._ss)
+        if self.pesi:
+            r += "%s(ESI)%s [0x%08x]\n" % (bcolors.HEADER, bcolors.ENDC, self.esi)
+            if self.esi in self._disass.symbols_imported:
+                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.esi], bcolors.ENDC)
+        else:
+            r += "%s(ESI)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.esi)
+        r += "%s(ESP)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.esp)
 
 
 
         return r
 
+    peax = property(_get_peax, _set_peax,doc='read/write flag eax')
     eax = property(_get_eax, _set_eax,doc='read/write registry eax')
     ax = property(_get_ax, _set_ax,doc='read/write registry ax')
     ah = property(_get_ah, _set_ah,doc='read/write registry ah')
     al = property(_get_al, _set_al,doc='read/write registry al')
 
+    pebx = property(_get_pebx, _set_pebx,doc='read/write flag ebx')
     ebx = property(_get_ebx, _set_ebx,doc='read/write registry ebx')
     bx = property(_get_bx, _set_bx,doc='read/write registry bx')
     bh = property(_get_bh, _set_bh,doc='read/write registry bh')
     bl = property(_get_bl, _set_bl,doc='read/write registry bl')
 
+    pecx = property(_get_pecx, _set_pecx,doc='read/write flag ecx')
     ecx = property(_get_ecx, _set_ecx,doc='read/write registry ecx')
     cx = property(_get_cx, _set_cx,doc='read/write registry cx')
     ch = property(_get_ch, _set_ch,doc='read/write registry ch')
     cl = property(_get_cl, _set_cl,doc='read/write registry cl')
 
+    pedx = property(_get_pedx, _set_pedx,doc='read/write flag edx')
     edx = property(_get_edx, _set_edx,doc='read/write registry edx')
     dx = property(_get_dx, _set_dx,doc='read/write registry dx')
     dh = property(_get_dh, _set_dh,doc='read/write registry dh')
     dl = property(_get_dl, _set_dl,doc='read/write registry dl')
 
+    pedi = property(_get_pedi, _set_pedi,doc='read/write flag edi')
     edi = property(_get_edi, _set_edi,doc='read/write registry edi')
     di = property(_get_di, _set_di,doc='read/write registry di')
 
     eip = property(_get_eip, _set_eip,doc='read/write registry eip')
     ip = property(_get_ip, _set_ip,doc='read/write registry ip')
 
+    pesi = property(_get_pesi, _set_pesi,doc='read/write flag esi')
     esi = property(_get_esi, _set_esi,doc='read/write registry esi')
     si = property(_get_si, _set_si,doc='read/write registry si')
 

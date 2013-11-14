@@ -460,4 +460,30 @@ class Test_Register_Disass32(object):
         assert True
         return
 
+    def test_xor(self):
+
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        try:
+            register = Register32()
+        except:
+            assert False
+            return
+
+        register.eax = 0x25
+        register.ebx = 0x12
+
+        r = 0x25^0x12
+
+        register.set('ecx',register.eax^register.ebx)
+
+        if register.ecx != r:
+            print register.ecx, r
+            assert False
+
+        assert True
+        return
+
+
 # vim:ts=4:expandtab:sw=4
