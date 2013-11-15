@@ -19,7 +19,7 @@
 @contact:      ivan.fontarensky@cassidian.com
 @organization: Cassidian CyberSecurity
 """
-from traceback import print_stack
+
 
 __author__ = 'ifontarensky'
 
@@ -45,6 +45,7 @@ from disass.prettyprint import bcolors
 from disass.exceptions import DataNotWin32ApplicationError
 from disass.exceptions import InvalidValueEIP
 from disass.exceptions import FunctionNameNotFound
+from disass.template import Template
 
 history_cmd_to_script = list()
 
@@ -89,7 +90,14 @@ disass.%s(%s)''' % (func, hist[1])
 
     print s
 
+AUTO_ENCODING = 0
+ASCII_ENCODING = 1
+UNICODE_ENCODING = 2
 
+STDCALL = 0x100
+CDECL = 0x101
+FASTCALL = 0x102
+THISCALL = 0x103
 
 class Disass32():
     """
@@ -204,7 +212,7 @@ class Disass32():
         except:
             return None
 
-    def set_position(self,pos):
+    def set_position(self, pos):
         """
         TODO:
         """
@@ -221,9 +229,13 @@ class Disass32():
         if self.verbose:
             self.print_assembly()
 
-    @script
-    def go_to_function(self, name, offset=0):
-        return self._go_to_function(name, offset, [])
+        return True
+
+    def set_virtual_position(self, pos):
+        """
+        TODO:
+        """
+        return self.set_position(pos - self.pe.OPTIONAL_HEADER.ImageBase)
 
     @script
     def go_to_instruction(self, instruction, offset=0):
@@ -232,57 +244,6 @@ class Disass32():
     @script
     def go_to_next_call(self, name, offset=0):
         return self._go_to_next_call(name, offset, [])
-
-    def _go_to_function(self, name, offset, history=[], indent=1):
-        """
-
-        """
-
-        if offset == 0:
-            self.next()
-            eip = self.register.eip
-            offset = eip
-
-
-        for d in Decode(offset, self.data_code[offset:offset+0x1000]):
-            instruction = d[2]
-            offset = d[0]
-
-            history.append(offset)
-
-            if name in self.replace_function(instruction):
-                self.set_position(offset)
-                return True
-
-            if 'RET' in instruction:
-                return False
-
-            if "CALL" in instruction :
-                address_expression = self.get_function_name(instruction)
-
-                if "0x" in address_expression:
-                    if '[' in address_expression:
-                        continue
-                    if ':' in address_expression:
-                        continue
-
-                    try:
-                        address = compute_operation(address_expression, self.register)
-
-                        if address in history:
-                            continue
-
-                        if address not in self.map_call:
-                            self.map_call[address] = "CALL_%x" % address
-                            self.map_call_by_addr["CALL_%x" % address] = address
-
-                        if self._go_to_function(name, address, history, indent+1):
-                            return True
-
-                    except Exception as e:
-                        print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't eval instruction'%s'" % instruction + bcolors.ENDC
-
-        return False
 
     def _go_to_instruction(self, instruction_search, offset, history=[], indent=1):
         """
@@ -309,7 +270,7 @@ class Disass32():
                 return False
 
             if "CALL" in instruction :
-                address_expression = self.get_function_name(instruction)
+                address_expression = self._get_function_name(instruction)
 
                 if "0x" in address_expression:
                     if '[' in address_expression:
@@ -361,7 +322,7 @@ class Disass32():
                 return False
 
             if "CALL" in instruction :
-                address_expression = self.get_function_name(instruction)
+                address_expression = self._get_function_name(instruction)
 
                 if "0x" in address_expression:
                     if '[' in address_expression:
@@ -397,27 +358,37 @@ class Disass32():
         return False
 
 
-    def get_value(self, address):
-
+    def get_string(self, address, type=AUTO_ENCODING):
         address = address - self.pe.OPTIONAL_HEADER.ImageBase
 
         data = self.data_code[address:address+0x100]
 
-        return data
-
-    def get_string(self, data):
         if data[0].isalpha():
 
-            #is unicode ?
-            if data[1] == '\x00':
-                return str(data.split('\x00\x00')[0].replace('\x00', ''))
+            if type == AUTO_ENCODING:
+                if data[1] == '\x00':
+                    return self._extract_unicode_string(data)
 
-            elif data[1].isalpha():
-                return data.split('\x00')[0]
+                elif data[1].isalpha():
+                    return self._extract_ascii_string(data)
+
+            if type == UNICODE_ENCODING:
+                return self._extract_unicode_string(data)
+
+            if type == ASCII_ENCODING:
+                return self._extract_ascii_string(data)
 
         return None
 
-    def extract_address(self, opcode):
+    def _extract_unicode_string(self, data):
+        if data[1] == '\x00':
+            return str(data.split('\x00\x00')[0].replace('\x00', ''))
+
+    def _extract_ascii_string(self, data):
+        if data[1].isalpha():
+            return data.split('\x00')[0]
+
+    def _extract_address(self, opcode):
         """
 
         """
@@ -450,7 +421,7 @@ class Disass32():
             print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't extract address : '%s' found " % (opcode) + bcolors.ENDC
             return ''
 
-    def extract_value(self, opcode):
+    def _extract_value(self, opcode):
         """
 
         """
@@ -476,7 +447,7 @@ class Disass32():
             print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't extract value : '%s' found " % (opcode) + bcolors.ENDC
             return ''
 
-    def get_function_name(self,opcode=None,saddr=None):
+    def _get_function_name(self, opcode=None, saddr=None):
         """
         @param opcode: Opcode what we want resolv.
         @type opcode:
@@ -486,7 +457,7 @@ class Disass32():
         if opcode!=None:
 
             try:
-                saddr = self.extract_address(opcode)
+                saddr = self._extract_address(opcode)
 
             except:
                 print >> sys.stderr, bcolors.FAIL + "\tErreur: Decomposition not possible : '%s' found in %s" % (saddr,opcode) + bcolors.ENDC
@@ -553,13 +524,13 @@ class Disass32():
         try:
             if "CALL" in instruction:
                 if "CALL DWORD" in instruction:
-                    return "CALL DWORD %s" % (bcolors.HEADER + self.get_function_name(instruction) + bcolors.ENDC)
+                    return "CALL DWORD %s" % (bcolors.HEADER + self._get_function_name(instruction) + bcolors.ENDC)
 
                 elif "CALL" in instruction:
-                    return "CALL %s" % (bcolors.HEADER + self.get_function_name(instruction) + bcolors.ENDC)
+                    return "CALL %s" % (bcolors.HEADER + self._get_function_name(instruction) + bcolors.ENDC)
 
             elif "JMP" in instruction:
-                return "JMP %s" % (bcolors.HEADER + self.get_function_name(instruction) + bcolors.ENDC)
+                return "JMP %s" % (bcolors.HEADER + self._get_function_name(instruction) + bcolors.ENDC)
 
             else:
                 return "%s" % (instruction)
@@ -665,9 +636,9 @@ class Disass32():
         return Decode(offset, self.data_code[offset:offset+0x20])[0][2]
 
     @script
-    def get_arguments(self, offset=None):
+    def get_stack(self, offset=None):
         """
-        Get arguments from a
+        Get Stack from a
         """
         if offset == None:
             offset = self.register.eip
@@ -678,6 +649,33 @@ class Disass32():
 
         self.update_stack_and_register(offset)
         return self.stack
+
+    @script
+    def get_arguments(self, n=0, convention=STDCALL):
+        """
+        Get arguments from a
+        """
+        if convention==STDCALL or convention==CDECL or convention==THISCALL:
+            if n == 0:
+                return self.get_stack()
+            else:
+                return self.get_stack()[n]
+
+        if convention==FASTCALL:
+            if n==0:
+                l = []
+                l.append(self.register.ecx)
+                l.append(self.register.edx)
+                l.extend(self.get_stack())
+                return l
+            elif n == 0:
+                return self.register.ecx
+            elif n == 1:
+                return self.register.edx
+            else:
+                return self.get_stack()[n-2]
+
+
 
 
     def update_stack_and_register(self, offset):
@@ -696,7 +694,7 @@ class Disass32():
         for d in Decode(addr, self.data_code[addr:addr+(offset-addr)]):
 
             if "PUSH" in d[2]:
-                svalue = self.extract_value(d[2])
+                svalue = self._extract_value(d[2])
 
                 if '[' in svalue:
                     svalue = svalue[1:-1]
@@ -707,7 +705,7 @@ class Disass32():
                 self.stack.append(svalue)
 
             elif "POP" in d[2]:
-                svalue = self.extract_value(d[2])
+                svalue = self._extract_value(d[2])
                 svalue = compute_operation(svalue, self.register)
                 self.stack.append(svalue)
 
@@ -756,7 +754,21 @@ class Disass32():
 
         self.stack.reverse()
 
+    def make_template(self, start=0, nb_instruction=0x20):
+        n = nb_instruction
+        eip = self.register.eip
 
+        position = 0
+
+        dec = self.decode[position:position+n]
+
+        nn = 0
+        assembly=''
+        for b in dec:
+            assembly += b[2]+'\n'
+
+        template = Template(assembly)
+        print template.compare(assembly)
 
 
 # vim:ts=4:expandtab:sw=4

@@ -345,7 +345,7 @@ class Test_Function_Disass32(object):
             assert False
             return
 
-        addr = disass.extract_address(value)
+        addr = disass._extract_address(value)
 
         if addr == '0x1111':
             assert True
@@ -380,7 +380,7 @@ class Test_Function_Disass32(object):
         return
 
 
-    def test_go_to_function_Create2times(self):
+    def test_go_to_next_call_Create2times(self):
         """
         Test de l'initialisation du moteur disass 32
         """
@@ -390,14 +390,14 @@ class Test_Function_Disass32(object):
         disass = Disass32(data=b64decode(data))
         disass2 = Disass32(data=b64decode(data))
 
-        disass.go_to_function('CreateThread')
+        disass.go_to_next_call('CreateThread')
 
-        if not disass2.go_to_function('CreateThread'):
+        if not disass2.go_to_next_call('CreateThread'):
             assert False
         assert True
 
     @pytest.mark.parametrize("value", ['GetVersion', 'GetCommandLine', 'CreateThread'])
-    def test_go_to_function(self,value):
+    def test_go_to_next_call(self,value):
         """
         Test de l'initialisation du moteur disass 32
         """
@@ -410,7 +410,7 @@ class Test_Function_Disass32(object):
             return
 
 
-        if disass.go_to_function(value):
+        if disass.go_to_next_call(value):
             assert True
             return
 
@@ -517,11 +517,11 @@ class Test_Function_Disass32(object):
             assert False
             return
 
-        if not disass.go_to_function(value):
+        if not disass.go_to_next_call(value):
             assert False
             return
 
-        args = disass.get_arguments()
+        args = disass.get_stack()
 
         if args == None:
             assert False
@@ -538,8 +538,7 @@ class Test_Function_Disass32(object):
         except:
             assert False
 
-        value = disass.get_value(0x41bad8)
-        domain = disass.get_string(value)
+        domain = disass.get_string(0x41bad8)
 
         if domain != 'timesofindia.8866.org':
             print domain
@@ -559,10 +558,10 @@ class Test_Function_Disass32(object):
             assert False
 
 
-        if not disass.go_to_function("CreateThread"):
+        if not disass.go_to_next_call("CreateThread"):
             assert False
 
-        startAddress = disass.get_arguments()[2]
+        startAddress = disass.get_stack()[2]
         if startAddress == 0:
             assert False
 
@@ -584,15 +583,15 @@ class Test_Function_Disass32(object):
             assert False
 
 
-        if not disass.go_to_function("CreateThread"):
+        if not disass.go_to_next_call("CreateThread"):
             assert False
 
-        startAddress = disass.get_arguments()[2]
+        startAddress = disass.get_stack()[2]
         if startAddress == 0:
             assert False
 
       # CreateThread( ..., ... , ... )
-        startAddress = disass.get_arguments()[2]
+        startAddress = disass.get_stack()[2]
 
         # We set our position in this Thread
         disass.set_position(startAddress - disass.pe.OPTIONAL_HEADER.ImageBase)

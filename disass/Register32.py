@@ -358,48 +358,58 @@ class Register32(object):
         return r
 
     def __repr__(self):
-        r =  "    Register            Segments\n"
-        r += "------------------------------------- \n"
+        r =  "    Registers\n"
+        r += "----------------------- \n"
         if self.peax:
-            r += "%s(EAX)%s [0x%08x]     | %s(CS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.eax, bcolors.HEADER, bcolors.ENDC, self.cs)
+            imported = ''
+            if self.eax in self._disass.symbols_imported:
+                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.eax], bcolors.ENDC)
+            r += "%s(EAX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.eax, imported)
         else:
-            r += "%s(EAX)%s  0x%08x      | %s(CS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.eax, bcolors.HEADER, bcolors.ENDC, self.cs)
+            r += "%s(EAX)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.eax)
+
         if self.pebx:
-            r += "%s(EBX)%s [0x%08x]     | %s(DS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ebx, bcolors.HEADER, bcolors.ENDC, self.ds)
+            imported = ''
             if self.ebx in self._disass.symbols_imported:
-                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.ebx], bcolors.ENDC)
+                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.ebx], bcolors.ENDC)
+            r += "%s(EBX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.ebx, imported)
         else:
-            r += "%s(EBX)%s  0x%08x      | %s(DS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ebx, bcolors.HEADER, bcolors.ENDC, self.ds)
+            r += "%s(EBX)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.ebx)
+
         if self.pecx:
-            r += "%s(ECX)%s [0x%08x]     | %s(ES)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ecx, bcolors.HEADER, bcolors.ENDC, self.es)
             if self.ecx in self._disass.symbols_imported:
-                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.ecx], bcolors.ENDC)
+                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.ecx], bcolors.ENDC)
+            r += "%s(ECX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.ecx, imported)
         else:
-            r += "%s(ECX)%s  0x%08x      | %s(ES)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.ecx, bcolors.HEADER, bcolors.ENDC, self.es)
+            r += "%s(ECX)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.ecx)
 
         if self.pedx:
-            r += "%s(EDX)%s [0x%08x]     | %s(FS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.edx, bcolors.HEADER, bcolors.ENDC, self.fs)
             if self.edx in self._disass.symbols_imported:
-                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.edx], bcolors.ENDC)
+                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.edx], bcolors.ENDC)
+            r += "%s(EDX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.edx, imported)
+
         else:
-            r += "%s(EDX)%s  0x%08x      | %s(FS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.edx, bcolors.HEADER, bcolors.ENDC, self.fs)
-        r += "                       | %s(GS)%s 0x%04x \n" % (bcolors.HEADER, bcolors.ENDC, self.gs)
-        r += "%s(EIP)%s  0x%08x      | %s(EBP)%s 0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.eip, bcolors.HEADER, bcolors.ENDC, self.ebp)
+            r += "%s(EDX)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.edx)
+
+        r += "\n"
+        r += "%s(EIP)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.eip)
+        r += "%s(EBP)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.ebp)
+
         if self.pedi:
-            r += "%s(EDI)%s [0x%08x]     | %s(SS)%s 0x%04x\n" %  (bcolors.HEADER, bcolors.ENDC, self.edi, bcolors.HEADER, bcolors.ENDC, self._ss)
             if self.edi in self._disass.symbols_imported:
-                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.edi], bcolors.ENDC)
+                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.edi], bcolors.ENDC)
+            r += "%s(EDI)%s [0x%08x]\t%s\n" %  (bcolors.HEADER, bcolors.ENDC, self.edi,imported)
         else:
-            r += "%s(EDI)%s  0x%08x      | %s(SS)%s 0x%04x\n" % (bcolors.HEADER, bcolors.ENDC, self.edi, bcolors.HEADER, bcolors.ENDC, self._ss)
+            r += "%s(EDI)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.edi)
+
         if self.pesi:
-            r += "%s(ESI)%s [0x%08x]\n" % (bcolors.HEADER, bcolors.ENDC, self.esi)
             if self.esi in self._disass.symbols_imported:
-                r += '           |->  %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.esi], bcolors.ENDC)
+                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.esi], bcolors.ENDC)
+            r += "%s(ESI)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.esi, imported)
         else:
             r += "%s(ESI)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.esi)
+
         r += "%s(ESP)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.esp)
-
-
 
         return r
 

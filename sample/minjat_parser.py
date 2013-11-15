@@ -25,22 +25,22 @@ def reverse_minjat(path, verbose):
 
     disass = Disass32(path=path, verbose=verbose)
 
-    if not disass.go_to_function('CreateThread'):
+    if not disass.go_to_next_call('CreateThread'):
         print >> sys.stderr, "CreateThread not found"
         sys.exit(0)
 
     # CreateThread( ..., ... , ... )
-    startAddress = disass.get_arguments()[2]
+    startAddress = disass.get_stack()[2]
 
     # We set our position in this Thread
-    disass.set_position(startAddress - disass.pe.OPTIONAL_HEADER.ImageBase)
+    disass.set_virtual_position(startAddress)
 
     # We are searching when C&C are copy
     if not disass.go_to_next_call('lstrcpyW'):
         print >> sys.stderr, "lstrcpyW not found"
         sys.exit(0)
 
-    address_cc1 = disass.get_arguments()[1]
+    address_cc1 = disass.get_stack()[1]
     binary_value = disass.get_value(address_cc1)
 
     print disass.get_string(binary_value)
@@ -51,7 +51,7 @@ def reverse_minjat(path, verbose):
         print >> sys.stderr, "CALL EBX not found"
         sys.exit(0)
 
-    address_cc2 = disass.get_arguments()[1]
+    address_cc2 = disass.get_stack()[1]
     binary_value = disass.get_value(address_cc2)
 
     print disass.get_string(binary_value)
