@@ -70,5 +70,18 @@ class Test_Instruction_Disass32(object):
             assert False
         return
 
+    @pytest.mark.parametrize("o", [
+        ('0x6d40', 0x6d40), ('0x0000', 0x0000), ('0xa0a0', 0xa0a0)
+    ])
+    def test_compute_instructrion(self,o):
+        """
+        Test
+        """
+        register = Register32()
+        value = compute_operation(o[0], register)
+        if value != o[1]:
+            assert False
+        else:
+            assert True
 
 # vim:ts=4:expandtab:sw=4

@@ -141,6 +141,7 @@ class Disass32():
         self.map_call[ep]="Entrypoint"
         self.map_call_by_addr["Entrypoint"] = ep
         self.set_position(ep)
+        self.backhistory = []
 
 
     def get_list_imported_symbols(self):
@@ -263,6 +264,7 @@ class Disass32():
             history.append(offset)
 
             if instruction_search in instruction:
+                self.backhistory = history
                 self.set_position(offset)
                 return True
 
@@ -309,20 +311,26 @@ class Disass32():
 
 
         for d in Decode(offset, self.data_code[offset:offset+0x1000]):
+
+
             instruction = d[2]
             offset = d[0]
 
             history.append(offset)
 
             if name in self.replace_function(instruction):
+                self.backhistory = history
                 self.set_position(offset)
                 return True
 
             if 'RET' in instruction:
                 return False
 
-            if "CALL" in instruction :
+            if 'JMP' in instruction:
                 address_expression = self._get_function_name(instruction)
+
+                if address_expression == None:
+                    continue
 
                 if "0x" in address_expression:
                     if '[' in address_expression:
@@ -332,19 +340,44 @@ class Disass32():
 
                     try:
                         address = compute_operation(address_expression, self.register)
-
-                        if address in history:
-                            continue
-
-                        if address not in self.map_call:
-                            self.map_call[address] = "CALL_%x" % address
-                            self.map_call_by_addr["CALL_%x" % address] = address
-
-                        if self._go_to_next_call(name, address, history, indent+1):
-                            return True
-
                     except Exception as e:
-                        print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't eval instruction'%s'" % instruction + bcolors.ENDC
+                        print >> sys.stderr, str(e), address_expression
+                        print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't eval JMP instruction'%s'" % instruction + bcolors.ENDC
+                        continue
+
+                    if address in history:
+                        continue
+                    if self._go_to_next_call(name, address, history, indent+1):
+                        return True
+
+
+            if "CALL" in instruction:
+                address_expression = self._get_function_name(instruction)
+
+
+                if "0x" in address_expression:
+                    if '[' in address_expression:
+                        continue
+                    if ':' in address_expression:
+                        continue
+
+                    try:
+                        address = compute_operation(address_expression, self.register)
+                    except Exception as e:
+                        print >> sys.stderr, str(e), address_expression
+                        print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't eval CALL instruction'%s'" % instruction + bcolors.ENDC
+                        continue
+
+                    if address in history:
+                        continue
+
+                    if address not in self.map_call:
+                        self.map_call[address] = "CALL_%x" % address
+                        self.map_call_by_addr["CALL_%x" % address] = address
+
+                    if self._go_to_next_call(name, address, history, indent+1):
+                        return True
+
 
                 if self.is_register(instruction):
                     self.update_stack_and_register(offset)
@@ -352,6 +385,7 @@ class Disass32():
                     value = self.register.get(address_expression.lower())
                     if value in self.symbols_imported:
                         if name == self.symbols_imported[value]:
+                            self.backhistory = history
                             self.set_position(offset)
                             return True
 
@@ -511,7 +545,7 @@ class Disass32():
 
         nn = 0
         for b in dec:
-            self.print_instruction(nn,b[0], b[3], b[2])
+            self.print_instruction(nn, b[0], b[3], b[2])
             nn +=1
         print ""
 
@@ -523,28 +557,44 @@ class Disass32():
         """
         try:
             if "CALL" in instruction:
+                fct = self._get_function_name(instruction)
+                if fct == None:
+                    return instruction
                 if "CALL DWORD" in instruction:
-                    return "CALL DWORD %s" % (bcolors.HEADER + self._get_function_name(instruction) + bcolors.ENDC)
+                    return "CALL DWORD %s" % (bcolors.HEADER + fct + bcolors.ENDC)
 
                 elif "CALL" in instruction:
-                    return "CALL %s" % (bcolors.HEADER + self._get_function_name(instruction) + bcolors.ENDC)
+                    return "CALL %s" % (bcolors.HEADER + fct + bcolors.ENDC)
 
             elif "JMP" in instruction:
-                return "JMP %s" % (bcolors.HEADER + self._get_function_name(instruction) + bcolors.ENDC)
+                fct = self._get_function_name(instruction)
+                if fct == None:
+                    return instruction
+                if "JMP DWORD" in instruction:
+                    return "JMP DWORD %s" % (bcolors.HEADER + fct + bcolors.ENDC)
+                else:
+                    return "JMP %s" % (bcolors.HEADER + fct + bcolors.ENDC)
 
             else:
                 return "%s" % (instruction)
         except Exception as e:
-            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't replace name this opcode '%s'" % instruction + bcolors.ENDC
-            raise e
+            print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't replace name in this instruction '%s'" % instruction + bcolors.ENDC
+            print >> sys.stderr, str(e)
+            return instruction
 
-    def print_instruction(self,nn, offset, code, instruction):
+    def print_instruction(self, nn=0, offset=None, code=None, instruction=None):
         """
         Print instruction in arguments
         @param : offset
         @param : code
         @param : instruction
         """
+
+        if offset==None and code==None and instruction == None:
+            offset = self.decode[0:1][0][0]
+            code = self.decode[0:1][0][3]
+            instruction = self.decode[0:1][0][2]
+
         if offset in self.map_call:
             print "\t %s%s%s" % (bcolors.OKGREEN, self.map_call[offset], bcolors.ENDC)
         try:
@@ -561,8 +611,7 @@ class Disass32():
                     if not found:
                         if '0x' in last_part and len(last_part) == 8 and '[' not in last_part:
                             address = int(last_part, 16)
-                            value = self.get_value(address)
-                            strva = self.get_string(value)
+                            strva = self.get_string(address)
 
                         if '0x' in last_part and len(last_part) == 10 and '[' in last_part:
                             address = int(last_part[1:-1], 16)
@@ -614,6 +663,22 @@ class Disass32():
         else:
             return data[offset] if offset in data else data[min(data.keys(), key=lambda k: abs(offset-k if offset-k>0 else k ))]
 
+    def where_start_my_bloc(self,offset=None):
+        if offset == None:
+            offset = self.register.eip
+
+        self.backhistory.reverse()
+        hr = self.backhistory
+        p = hr[0]
+        for h in hr[1:]:
+            if p-h<0:
+                self.backhistory.reverse()
+                return p
+            if p-h>0x10:
+                self.backhistory.reverse()
+                return p
+            p = h
+        return offset
 
     def rename_function(self, old_name, new_name):
         """
@@ -651,34 +716,37 @@ class Disass32():
         return self.stack
 
     @script
-    def get_arguments(self, n=0, convention=STDCALL):
+    def get_arguments(self, n=None, convention=STDCALL, offset=None):
         """
         Get arguments from a
         """
+        if offset == None:
+            offset = self.register.eip
+        self.update_stack_and_register(offset)
         if convention==STDCALL or convention==CDECL or convention==THISCALL:
-            if n == 0:
-                return self.get_stack()
+            if n == None:
+                return self.get_stack(offset=offset)
             else:
-                return self.get_stack()[n]
+                return self.get_stack(offset=offset)[n]
 
         if convention==FASTCALL:
-            if n==0:
+            if n==None:
                 l = []
                 l.append(self.register.ecx)
                 l.append(self.register.edx)
-                l.extend(self.get_stack())
+                l.extend(self.get_stack(offset=offset))
                 return l
             elif n == 0:
                 return self.register.ecx
             elif n == 1:
                 return self.register.edx
             else:
-                return self.get_stack()[n-2]
+                return self.get_stack(offset=offset)[n-2]
 
 
 
 
-    def update_stack_and_register(self, offset):
+    def update_stack_and_register(self, offset=None):
         """
         Update Stack and register
         """
@@ -689,10 +757,15 @@ class Disass32():
         functionname = self.where_am_i(offset)
 
         addr = self.map_call_by_addr[functionname]
+        if addr < offset:
+            s = addr
+            e = offset
+        else:
+            s = self.where_start_my_bloc()# TODO : change this horrible value
+            e = offset
 
         self.stack = list()
-        for d in Decode(addr, self.data_code[addr:addr+(offset-addr)]):
-
+        for d in Decode(addr, self.data_code[s:e]):
             if "PUSH" in d[2]:
                 svalue = self._extract_value(d[2])
 
@@ -715,7 +788,7 @@ class Disass32():
             elif "LEAVE" in d[2]:
                 continue
 
-            elif "MOV" in d[2] or "LEA" in d[2]:
+            elif ("MOV" in d[2] or "LEA" in d[2]):
                 bloc = d[2].split(' ')
                 if "DWORD" in d[2]:
                     pass
@@ -724,7 +797,11 @@ class Disass32():
                 else:
                     bloc = d[2].split(' ')
 
+                    if 'REP' in bloc:
+                        continue
+
                     try:
+
                         dst = bloc[1][:-1].lower()
                         src = bloc[2].lower()
 
@@ -732,7 +809,6 @@ class Disass32():
                             continue
                         if ':' in src or ':' in dst:
                             continue
-
 
                         if '[' in src:
                             value_src = compute_operation(src[1:-1], self.register)
@@ -742,6 +818,7 @@ class Disass32():
                             self.register.set(dst, value_src)
 
                     except Exception as e:
+                        print >> sys.stderr, bcolors.FAIL + "\tErreur: '%s'" % (bloc) + bcolors.ENDC
                         print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't update stack and registry '%s'" % (str(e)) + bcolors.ENDC
                         pass
 
@@ -750,7 +827,6 @@ class Disass32():
                 dst = bloc[1][:-1].lower()
                 src = bloc[2].lower()
                 self.register.set(dst, self.register.get(dst) ^ self.register.get(src))
-
 
         self.stack.reverse()
 

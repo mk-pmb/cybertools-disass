@@ -363,7 +363,7 @@ class Register32(object):
         if self.peax:
             imported = ''
             if self.eax in self._disass.symbols_imported:
-                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.eax], bcolors.ENDC)
+                imported = ' -> %s%s%s' % (bcolors.OKBLUE, self._disass.symbols_imported[self.eax], bcolors.ENDC)
             r += "%s(EAX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.eax, imported)
         else:
             r += "%s(EAX)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.eax)
@@ -371,21 +371,21 @@ class Register32(object):
         if self.pebx:
             imported = ''
             if self.ebx in self._disass.symbols_imported:
-                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.ebx], bcolors.ENDC)
+                imported = ' -> %s%s%s' % (bcolors.OKBLUE,self._disass.symbols_imported[self.ebx], bcolors.ENDC)
             r += "%s(EBX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.ebx, imported)
         else:
             r += "%s(EBX)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.ebx)
 
         if self.pecx:
             if self.ecx in self._disass.symbols_imported:
-                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.ecx], bcolors.ENDC)
+                imported = ' -> %s%s%s' % (bcolors.OKBLUE, self._disass.symbols_imported[self.ecx], bcolors.ENDC)
             r += "%s(ECX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.ecx, imported)
         else:
             r += "%s(ECX)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.ecx)
 
         if self.pedx:
             if self.edx in self._disass.symbols_imported:
-                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE,self._disass.symbols_imported[self.edx], bcolors.ENDC)
+                imported = ' -> %s%s%s' % (bcolors.OKBLUE,self._disass.symbols_imported[self.edx], bcolors.ENDC)
             r += "%s(EDX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.edx, imported)
 
         else:
@@ -397,14 +397,14 @@ class Register32(object):
 
         if self.pedi:
             if self.edi in self._disass.symbols_imported:
-                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.edi], bcolors.ENDC)
+                imported = ' -> %s%s%s' % (bcolors.OKBLUE, self._disass.symbols_imported[self.edi], bcolors.ENDC)
             r += "%s(EDI)%s [0x%08x]\t%s\n" %  (bcolors.HEADER, bcolors.ENDC, self.edi,imported)
         else:
             r += "%s(EDI)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.edi)
 
         if self.pesi:
             if self.esi in self._disass.symbols_imported:
-                imported = ' -> %s%s%s\n' % (bcolors.OKBLUE, self._disass.symbols_imported[self.esi], bcolors.ENDC)
+                imported = ' -> %s%s%s' % (bcolors.OKBLUE, self._disass.symbols_imported[self.esi], bcolors.ENDC)
             r += "%s(ESI)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.esi, imported)
         else:
             r += "%s(ESI)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.esi)

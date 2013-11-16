@@ -41,9 +41,8 @@ def reverse_minjat(path, verbose):
         sys.exit(0)
 
     address_cc1 = disass.get_stack()[1]
-    binary_value = disass.get_value(address_cc1)
 
-    print disass.get_string(binary_value)
+    print disass.get_string(address_cc1)
 
 
     # We are searching when C&C are copy
@@ -52,9 +51,7 @@ def reverse_minjat(path, verbose):
         sys.exit(0)
 
     address_cc2 = disass.get_stack()[1]
-    binary_value = disass.get_value(address_cc2)
-
-    print disass.get_string(binary_value)
+    print disass.get_string(address_cc2)
 
 
 if __name__ == '__main__':
