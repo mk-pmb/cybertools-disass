@@ -377,6 +377,7 @@ class Register32(object):
             r += "%s(EBX)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.ebx)
 
         if self.pecx:
+            imported = ''
             if self.ecx in self._disass.symbols_imported:
                 imported = ' -> %s%s%s' % (bcolors.OKBLUE, self._disass.symbols_imported[self.ecx], bcolors.ENDC)
             r += "%s(ECX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.ecx, imported)
@@ -384,6 +385,7 @@ class Register32(object):
             r += "%s(ECX)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.ecx)
 
         if self.pedx:
+            imported = ''
             if self.edx in self._disass.symbols_imported:
                 imported = ' -> %s%s%s' % (bcolors.OKBLUE,self._disass.symbols_imported[self.edx], bcolors.ENDC)
             r += "%s(EDX)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.edx, imported)
@@ -396,6 +398,7 @@ class Register32(object):
         r += "%s(EBP)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.ebp)
 
         if self.pedi:
+            imported = ''
             if self.edi in self._disass.symbols_imported:
                 imported = ' -> %s%s%s' % (bcolors.OKBLUE, self._disass.symbols_imported[self.edi], bcolors.ENDC)
             r += "%s(EDI)%s [0x%08x]\t%s\n" %  (bcolors.HEADER, bcolors.ENDC, self.edi,imported)
@@ -403,6 +406,7 @@ class Register32(object):
             r += "%s(EDI)%s  0x%08x\n" % (bcolors.HEADER, bcolors.ENDC, self.edi)
 
         if self.pesi:
+            imported = ''
             if self.esi in self._disass.symbols_imported:
                 imported = ' -> %s%s%s' % (bcolors.OKBLUE, self._disass.symbols_imported[self.esi], bcolors.ENDC)
             r += "%s(ESI)%s [0x%08x]\t%s\n" % (bcolors.HEADER, bcolors.ENDC, self.esi, imported)

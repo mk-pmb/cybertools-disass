@@ -108,6 +108,7 @@ class Test_Function_Disass32(object):
         assert True
         return
 
+
     def test_position_value(self):
         """
         Test de l'initialisation du moteur disass 32
@@ -607,6 +608,29 @@ class Test_Function_Disass32(object):
 
         if eip1 == eip2:
             assert False
+
+        assert True
+
+    def test_next_call_from_import(self):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+            return
+
+        functions_list_to_check = list()
+        for name_function in disass.symbols_imported_by_name:
+            functions_list_to_check.append(name_function)
+
+        for name_function in functions_list_to_check:
+            disass.set_position(disass.get_entry_point())
+            res = disass.go_to_next_call(name_function)
+            if not res:
+                assert False
 
         assert True
 
