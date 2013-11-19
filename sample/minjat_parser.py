@@ -21,23 +21,31 @@ import argparse
 from disass.Disass32 import Disass32
 
 
-def reverse_minjat(path, verbose):
+def reverse(path, verbose):
 
     disass = Disass32(path=path, verbose=verbose)
 
-    if not disass.go_to_next_call('CreateThread'):
-        print >> sys.stderr, "CreateThread not found"
-        sys.exit(0)
 
-    # CreateThread( ..., ... , ... )
-    startAddress = disass.get_stack()[2]
+    if disass.is_dll():
+        addrhMainThread = disass.symbols_exported_by_name['hMainThread']
+        disass.set_position(addrhMainThread)
+    elif disass.is_exe():
+        if not disass.go_to_next_call('CreateThread'):
+            print >> sys.stderr, "CreateThread not found in %s" % path
+            return
 
-    # We set our position in this Thread
-    disass.set_virtual_position(startAddress)
+        # CreateThread( ..., ... , ... )
+        startAddress = disass.get_stack()[2]
+
+        # We set our position in this Thread
+        disass.set_virtual_position(startAddress)
+    else:
+        return
+
 
     # We are searching when C&C are copy
     if not disass.go_to_next_call('lstrcpyW'):
-        print >> sys.stderr, "lstrcpyW not found"
+        print >> sys.stderr, "lstrcpyW not found in %s" % path
         sys.exit(0)
 
     address_cc1 = disass.get_stack()[1]
@@ -47,7 +55,7 @@ def reverse_minjat(path, verbose):
 
     # We are searching when C&C are copy
     if not disass.go_to_next_call('lstrcpyW'):
-        print >> sys.stderr, "CALL EBX not found"
+        print >> sys.stderr, "CALL lstrcpyW not found in %s" % path
         sys.exit(0)
 
     address_cc2 = disass.get_stack()[1]
@@ -72,4 +80,6 @@ if __name__ == '__main__':
         print "Usage : minjat_parser.py minjat.infected"
         sys.exit(1)
 
-    reverse_minjat(path=args.path[0], verbose=verbose)
+
+    for path in args.path:
+        reverse(path=path, verbose=verbose)

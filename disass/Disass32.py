@@ -410,6 +410,7 @@ class Disass32():
 
 
                 if self.is_register(instruction):
+                    self.backhistory = history
                     self.update_stack_and_register(offset)
 
                     value = self.register.get(address_expression.lower())
@@ -448,6 +449,7 @@ class Disass32():
                 return self._extract_ascii_string(data)
 
         return None
+
 
     def _extract_unicode_string(self, data):
         if data[1] == '\x00':
@@ -854,7 +856,7 @@ class Disass32():
                 self.stack.append(svalue)
 
             elif "CALL" in d[2]:
-                self.stack=list()
+                continue
 
             elif "LEAVE" in d[2]:
                 continue
@@ -876,6 +878,8 @@ class Disass32():
                     if 'MOVSW' in bloc:
                         continue
                     if 'MOVSB' in bloc:
+                        continue
+                    if 'MOVZX' in bloc:
                         continue
                     try:
 
@@ -900,10 +904,18 @@ class Disass32():
                         pass
 
             elif "XOR" in d[2]:
-                bloc = d[2].split(' ')
-                dst = bloc[1][:-1].lower()
-                src = bloc[2].lower()
-                self.register.set(dst, self.register.get(dst) ^ self.register.get(src))
+                try:
+                    bloc = d[2].split(' ')
+                    dst = bloc[1][:-1].lower()
+                    if '[' in d[2]:
+                        continue
+                    src = bloc[2].lower()
+                    self.register.set(dst, self.register.get(dst) ^ self.register.get(src))
+                except Exception as e:
+                    print >> sys.stderr, bcolors.FAIL + "\tErreur: '%s'" % (bloc) + bcolors.ENDC
+                    print >> sys.stderr, bcolors.FAIL + "\tErreur: Can't xor '%s' for %s" % (str(e),d[2]) + bcolors.ENDC
+                    pass
+
 
         self.stack.reverse()
 

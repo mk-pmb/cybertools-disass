@@ -21,22 +21,9 @@ import pytest
 from disass.Disass32 import Disass32
 from base64 import b64decode
 
-class Test_Function_Disass32(object):
+class Test_Function_Disass32_Minjat(object):
 
 
-        
-    def test_load_data_agentuuw(self):
-        """
-        Test de l'initialisation du moteur disass 32
-        """
-        from test.agentuuw.f1 import data
-        try:
-            disass = Disass32(data=b64decode(data))
-        except:
-            assert False
-            return
-
-        assert True
 
     def test_load_data_minjat(self):
         """
@@ -494,7 +481,7 @@ class Test_Function_Disass32(object):
         disass.rename_function('Entrypoint',"hopla")
 
         try :
-            addr = disass.map_call_by_addr["hopla"]
+            addr = disass.map_call_by_name["hopla"]
             name = disass.map_call[addr]
         except:
             assert False
@@ -611,7 +598,15 @@ class Test_Function_Disass32(object):
 
         assert True
 
-    def test_next_call_from_import(self):
+    @pytest.mark.parametrize("value", ['GetCommandLine', 'GetStdHandle',  'HeapDestroy',
+'FreeEnvironmentStringsA','GetCurrentProcess','RegOpenKeyExW','FreeEnvironmentStringsW',
+'GetCPInfo','GetStringTypeA','GetModuleFileNameW','ExitProcess','GetMessageW','ShowWindow',
+'GetModuleFileNameA','LoadLibraryA','UnhandledExceptionFilter','InterlockedDecrement',
+'MultiByteToWideChar','SetFilePointer','LoadAcceleratorsW','CreateThread','TerminateProcess','LoadStringW',
+'CoUninitialize','GetVersion','GetCurrentThreadId','LeaveCriticalSection','HeapFree','EnterCriticalSection',
+'SetHandleCount','LoadLibraryW','LoadCursorW','GetOEMCP','TlsAlloc','CopyFileW','GetStartupInfoA',
+'LCMapStringW','VirtualFree','wsprintfW' ])
+    def test_next_call_from_import(self, value):
         """
         Test de l'initialisation du moteur disass 32
         """
@@ -622,15 +617,10 @@ class Test_Function_Disass32(object):
             assert False
             return
 
-        functions_list_to_check = list()
-        for name_function in disass.symbols_imported_by_name:
-            functions_list_to_check.append(name_function)
 
-        for name_function in functions_list_to_check:
-            disass.set_position(disass.get_entry_point())
-            res = disass.go_to_next_call(name_function)
-            if not res:
-                assert False
+        res = disass.go_to_next_call(value)
+        if not res:
+            assert False
 
         assert True
 
