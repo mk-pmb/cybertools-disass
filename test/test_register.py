@@ -1,3 +1,18 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+
+#############################################################################
+##                                                                         ##
+## This file is part of Disass                                             ##
+##                                                                         ##
+##                                                                         ##
+## Copyright (C) 2013 Cassidian CyberSecurity SAS. All rights reserved.    ##
+## This document is the property of Cassidian CyberSecurity SAS, it may    ##
+## not be circulated without prior licence                                 ##
+##                                                                         ##
+##  Author: Ivan Fontarensky <ivan.fontarensky@cassidian.com>              ##
+##                                                                         ##
+#############################################################################
 
 
 

@@ -7,7 +7,7 @@
 ##                                                                         ##
 ##                                                                         ##
 ## Copyright (C) 2013 Cassidian CyberSecurity SAS. All rights reserved.    ##
-## This document is the property of Cassidian SyberSecurity SAS, it may    ##
+## This document is the property of Cassidian CyberSecurity SAS, it may    ##
 ## not be circulated without prior licence                                 ##
 ##                                                                         ##
 ##  Author: Ivan Fontarensky <ivan.fontarensky@cassidian.com>              ##

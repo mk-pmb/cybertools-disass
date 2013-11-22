@@ -35,12 +35,12 @@ data_files = [
 setup(
     name = 'disass',
     version = '0.5',
-    packages=['disass','disass/core/'],
+    packages=['disass'],
     data_files=data_files,
     # Metadata
     author = 'Ivan Fontarensky',
     author_email = 'ivan.fontarensky@cassidian.com',
-    license = 'Unknown',
+    license = 'GPLv3',
     # keywords = '',
 
 
