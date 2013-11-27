@@ -332,6 +332,9 @@ class Disass32():
             instruction = d[2]
             offset = d[0]
 
+            if offset in history:
+                return False
+
             history.append(offset)
 
             if name in self.replace_function(instruction):
@@ -342,7 +345,7 @@ class Disass32():
             if 'RET' in instruction:
                 return False
 
-            if 'JMP' in instruction or 'JNZ' in instruction:
+            if 'J' == instruction[0]:
                 address_expression = self._get_function_name(instruction)
 
                 if address_expression in self.symbols_imported_by_name:
@@ -486,11 +489,13 @@ class Disass32():
                 else:
                     saddr = opcode.split(' ')[1]
                 return saddr
-            elif "JNZ" in opcode:
-                if "JNZ DWORD" in opcode:
+            elif "J" == opcode[0]:
+                fct = opcode.split(' ')[0]
+
+                if "%s DWORD" % (fct) in opcode:
                     saddr = opcode.split(' ')[2]
-                elif "JNZ FAR" in opcode:
-                    if "JNZ FAR DWORD" in opcode:
+                elif "%s FAR" % (fct) in opcode:
+                    if "%s FAR DWORD" % (fct) in opcode:
                         saddr = opcode.split(' ')[3]
                     else:
                         saddr = opcode.split(' ')[2]
