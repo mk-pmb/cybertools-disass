@@ -34,7 +34,6 @@ class Test_Function_Disass32_Minjat(object):
             disass = Disass32(data=b64decode(data))
         except:
             assert False
-            return
 
         assert True
         return
@@ -48,11 +47,9 @@ class Test_Function_Disass32_Minjat(object):
         try:
             disass = Disass32(data=data)
         except DataNotWin32ApplicationError:
-            assert True
             return
         except:
             assert False
-            return
 
         assert False
         return
@@ -66,7 +63,6 @@ class Test_Function_Disass32_Minjat(object):
             disass = Disass32(data=b64decode(data))
         except:
             assert False
-            return
 
         if "InternetReadFile" in disass.symbols_imported_by_name:
             assert True
@@ -83,7 +79,6 @@ class Test_Function_Disass32_Minjat(object):
             disass = Disass32(data=b64decode(data))
         except:
             assert False
-            return
 
         ep = disass.get_entry_point()
         if ep == None:
@@ -105,26 +100,21 @@ class Test_Function_Disass32_Minjat(object):
             disass = Disass32(data=b64decode(data))
         except:
             assert False
-            return
 
         try:
             disass.set_position(0x0)
         except:
             assert False
-            return
 
         try:
             disass.set_position(0x100)
         except:
             assert False
-            return
-
 
         try:
             disass.set_position(0x200)
         except:
             assert False
-            return
 
         assert True
         return
@@ -139,7 +129,6 @@ class Test_Function_Disass32_Minjat(object):
             disass = Disass32(data=b64decode(data))
         except:
             assert False
-            return
 
         try:
             disass.set_position(-0x20)
@@ -148,7 +137,6 @@ class Test_Function_Disass32_Minjat(object):
             return
 
         assert False
-        return
 
     @pytest.mark.parametrize("value", ['[EBP-0x14]','[EBP+0x14]','[EIP]','[CS:0x254]','[CS:DS]','CALL EAX'])
     def test_is_register(self,value):
@@ -161,14 +149,12 @@ class Test_Function_Disass32_Minjat(object):
             disass = Disass32(data=b64decode(data))
         except:
             assert False
-            return
 
         if disass.is_register(value):
             assert True
             return
 
         assert False
-        return
 
     @pytest.mark.parametrize("value", ['CALL [0x14]'])
     def test_is_not_register(self,value):
@@ -615,13 +601,50 @@ class Test_Function_Disass32_Minjat(object):
             disass = Disass32(data=b64decode(data))
         except:
             assert False
-            return
-
 
         res = disass.go_to_next_call(value)
         if not res:
             assert False
 
         assert True
+
+    @pytest.mark.parametrize("value", ['CreateThread'])
+    def test_get_arguments(self, value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+
+        res = disass.go_to_next_call(value)
+
+        if int(disass.get_arguments(3)) == 0x403b16:
+            return
+
+        assert False
+
+    @pytest.mark.parametrize("value", ['CreateMutex'])
+    def test_get_arguments_bad_value(self, value):
+        """
+        Test de l'initialisation du moteur disass 32
+        """
+        from test.minjat.f1 import data
+        try:
+            disass = Disass32(data=b64decode(data))
+        except:
+            assert False
+
+
+        res = disass.go_to_next_call(value)
+
+        try:
+            a = disass.get_arguments(0)
+        except ValueError as e:
+            return
+
+        assert False
 
 # vim:ts=4:expandtab:sw=4

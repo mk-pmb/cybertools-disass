@@ -36,16 +36,16 @@ def reverse(path, verbose):
     disass = Disass32(path=path, verbose=verbose)
 
     if disass.go_to_next_call('CreateMutex'):
-        address_mutex = disass.get_arguments(2)
+        address_mutex = disass.get_arguments(3)
         print "  Mutex\t:",disass.get_string(address_mutex)
 
     found = False
 
     if disass.go_to_next_call('__jmp__WS2_32.dll@52'):
-        print "  CC1\t:", disass.get_string(disass.get_arguments(0))
+        print "  CC1\t:", disass.get_string(disass.get_arguments(1))
         found = True
     if disass.go_to_next_call('__jmp__WS2_32.dll@52'):
-        print "  CC2\t:", disass.get_string(disass.get_arguments(0))
+        print "  CC2\t:", disass.get_string(disass.get_arguments(1))
 
 
     if not found:
@@ -59,10 +59,10 @@ def reverse(path, verbose):
             disass.set_virtual_position(startAddress)
 
             if disass.go_to_next_call('__jmp__WS2_32.dll@52'):
-                print "  CC1\t:", disass.get_string(disass.get_arguments(0))
+                print "  CC1\t:", disass.get_string(disass.get_arguments(1))
                 found = True
             if disass.go_to_next_call('__jmp__WS2_32.dll@52'):
-                print "  CC2\t:", disass.get_string(disass.get_arguments(0))
+                print "  CC2\t:", disass.get_string(disass.get_arguments(1))
 
     if not found:
         #
@@ -72,10 +72,10 @@ def reverse(path, verbose):
             disass.up()
             f2 = disass.where_am_i()
             disass.up()
-            print "  CC1\t:", disass.get_string(disass.get_arguments(0))
+            print "  CC1\t:", disass.get_string(disass.get_arguments(1))
             found = True
             if disass.go_to_next_call(f2):
-                print "  CC2\t:", disass.get_string(disass.get_arguments(0))
+                print "  CC2\t:", disass.get_string(disass.get_arguments(1))
 
     return
 

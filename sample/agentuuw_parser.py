@@ -29,18 +29,18 @@ def reverse(path, verbose):
     disass = Disass32(path=path, verbose=verbose)
 
     if disass.go_to_next_call('CreateMutex'):
-        address_mutex = disass.get_arguments(2)
+        address_mutex = disass.get_arguments(3)
         print "  Mutex\t:", disass.get_string(address_mutex)
 
 
 
     if disass.go_to_next_call('InternetOpenA'):
-        ua = disass.get_string(disass.get_arguments(0))
+        ua = disass.get_string(disass.get_arguments(1))
 
         disass.up()
         disass.up()
         last_position = disass.register.eip
-        host = disass.get_string(disass.get_arguments(0))
+        host = disass.get_string(disass.get_arguments(1))
 
         disass.go_to_next_call('InternetConnectA')
         try:
@@ -54,16 +54,16 @@ def reverse(path, verbose):
         print ""
         disass.set_position(last_position)
         if disass.go_to_next_call('InternetOpenA'):
-            ua = disass.get_string(disass.get_arguments(0))
+            ua = disass.get_string(disass.get_arguments(1))
 
             disass.up()
             disass.up()
             last_position = disass.register.eip
-            host = disass.get_string(disass.get_arguments(0))
+            host = disass.get_string(disass.get_arguments(1))
 
             disass.go_to_next_call('InternetConnectA')
             try:
-                port = disass.get_arguments(2)
+                port = disass.get_arguments(3)
                 print "  Host\t\t:", host
                 print "  Port\t\t:", port
                 print "  UserAgent\t:", ua

@@ -780,8 +780,7 @@ class Disass32():
             offset = self.register.eip
 
         instruction = Decode(offset, self.data_code[offset:offset+0x50])[0][2]
-        if "CALL" not in instruction:
-            return None
+
 
         self.update_stack_and_register(offset)
         return self.stack
@@ -793,26 +792,21 @@ class Disass32():
         """
         if offset == None:
             offset = self.register.eip
+
+        if n is None or n==0:
+            raise ValueError("Invalid value for arguments")
+
         self.update_stack_and_register(offset)
         if convention==STDCALL or convention==CDECL or convention==THISCALL:
-            if n == None:
-                return self.get_stack(offset=offset)
-            else:
-                return self.get_stack(offset=offset)[n]
+            return self.get_stack(offset=offset)[n-1]
 
         if convention==FASTCALL:
-            if n==None:
-                l = []
-                l.append(self.register.ecx)
-                l.append(self.register.edx)
-                l.extend(self.get_stack(offset=offset))
-                return l
-            elif n == 0:
+            if n == 1:
                 return self.register.ecx
-            elif n == 1:
+            elif n == 2:
                 return self.register.edx
             else:
-                return self.get_stack(offset=offset)[n-2]
+                return self.get_stack(offset=offset)[n-3]
 
 
 

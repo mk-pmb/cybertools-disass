@@ -35,7 +35,7 @@ def reverse(path, verbose):
             return
 
         # CreateThread( ..., ... , ... )
-        startAddress = disass.get_stack()[2]
+        startAddress = disass.get_arguments(3)
 
         # We set our position in this Thread
         disass.set_virtual_position(startAddress)
@@ -48,7 +48,7 @@ def reverse(path, verbose):
         print >> sys.stderr, "lstrcpyW not found in %s" % path
         sys.exit(0)
 
-    address_cc1 = disass.get_stack()[1]
+    address_cc1 = disass.get_arguments(2)
 
     print disass.get_string(address_cc1)
 
@@ -58,7 +58,7 @@ def reverse(path, verbose):
         print >> sys.stderr, "CALL lstrcpyW not found in %s" % path
         sys.exit(0)
 
-    address_cc2 = disass.get_stack()[1]
+    address_cc2 = disass.get_arguments(2)
     print disass.get_string(address_cc2)
 
 
