@@ -52,10 +52,10 @@ class Template():
         s = s.lower()
         s = notalphanum_re.sub('', s)
         len_s = len(s)
-        ngrams=set()
-        i=0
+        ngrams = set()
+        i = 0
         while i + n <= len_s:
-            ngrams.add(s[i:i+n])
+            ngrams.add(s[i:i + n])
             i += 1
         return self.asciify(''.join(sorted(ngrams)))
 
@@ -68,20 +68,21 @@ class Template():
 
 
     # http://hetland.org/coding/python/levenshtein.py
-    def levenshtein(self,a,b):
+    def levenshtein(self, a, b):
         "Calculates the Levenshtein distance between a and b."
         n, m = len(a), len(b)
         if n > m:
             # Make sure n <= m, to use O(min(n,m)) space
-            a,b = b,a
-            n,m = m,n
-        current = range(n+1)
-        for i in range(1,m+1):
-            previous, current = current, [i]+[0]*n
-            for j in range(1,n+1):
-                add, delete = previous[j]+1, current[j-1]+1
-                change = previous[j-1]
-                if a[j-1] != b[i-1]:
+            a, b = b, a
+            n, m = m, n
+        current = range(n + 1)
+        for i in xrange(1, m + 1):
+            previous, current = current, [i] + [0] * n
+            for j in xrange(1, n + 1):
+                add, delete = previous[j] + 1, current[j - 1] + 1
+                change = previous[j - 1]
+                if a[j - 1] != b[i - 1]:
                     change = change + 1
                 current[j] = min(add, delete, change)
         return current[n]
+

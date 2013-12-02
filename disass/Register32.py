@@ -45,7 +45,7 @@ ESP/SP : Offset mémoire de la pile.\
 
 class Register32(object):
 
-    def __init__(self, disass = None):
+    def __init__(self, disass=None):
         self._eax = 0
         self._peax = False
         self._ebx = 0
@@ -69,13 +69,13 @@ class Register32(object):
         self._ebp = 0
         self._disass = disass
 
-    def _set_eax(self,v):
-        self._eax = v&0xffffffff
+    def _set_eax(self, v):
+        self._eax = v & 0xffffffff
 
     def _get_eax(self):
         return self._eax
 
-    def _set_peax(self,v):
+    def _set_peax(self, v):
         self._peax = v
 
     def _get_peax(self):
@@ -84,28 +84,28 @@ class Register32(object):
     def _get_ax(self):
         return (self._eax & 0x0000ffff)
 
-    def _set_ax(self,v):
+    def _set_ax(self, v):
         self._eax = (self._eax & 0xffff0000) + (v & 0x0000ffff)
 
     def _set_ah(self,v):
-        self._eax = (self._eax & 0xffff00ff) + ( v << 8 )
+        self._eax = (self._eax & 0xffff00ff) + (v << 8)
 
     def _get_ah(self):
-        return ((self._eax & 0x0000ff00)>>8)
+        return ((self._eax & 0x0000ff00) >> 8)
 
-    def _set_al(self,v):
-        self._eax = (self._eax & 0xffffff00) + ( v & 0x000000ff )
+    def _set_al(self, v):
+        self._eax = (self._eax & 0xffffff00) + (v & 0x000000ff)
 
     def _get_al(self):
         return (self._eax & 0x000000ff)
 
-    def _set_ebx(self,v):
-        self._ebx = v&0xffffffff
+    def _set_ebx(self, v):
+        self._ebx = v & 0xffffffff
 
     def _get_ebx(self):
         return self._ebx
 
-    def _set_pebx(self,v):
+    def _set_pebx(self, v):
         self._pebx = v
 
     def _get_pebx(self):
@@ -114,23 +114,23 @@ class Register32(object):
     def _get_bx(self):
         return (self._ebx & 0x0000ffff)
 
-    def _set_bx(self,v):
+    def _set_bx(self, v):
         self._ebx = (self._ebx & 0xffff0000) + (v & 0x0000ffff)
 
-    def _set_bh(self,v):
-        self._ebx = (self._ebx & 0xffff00ff) + ( v << 8 )
+    def _set_bh(self, v):
+        self._ebx = (self._ebx & 0xffff00ff) + (v << 8)
 
     def _get_bh(self):
         return ((self._ebx & 0x0000ff00)>>8)
 
-    def _set_bl(self,v):
-        self._ebx = (self._ebx & 0xffffff00) + ( v & 0x000000ff )
+    def _set_bl(self, v):
+        self._ebx = (self._ebx & 0xffffff00) + (v & 0x000000ff)
 
     def _get_bl(self):
         return (self._ebx & 0x000000ff)
 
-    def _set_ecx(self,v):
-        self._ecx = v&0xffffffff
+    def _set_ecx(self, v):
+        self._ecx = v & 0xffffffff
 
     def _get_ecx(self):
         return self._ecx
@@ -289,14 +289,13 @@ class Register32(object):
         return (self._ebp)
 
     def _set_ebp(self,v):
-        self._bp = (v & 0xffffffff)
-
+        self._ebp = (v & 0xffffffff)
 
     def _get_bp(self):
-        return (self._bp & 0x0000ffff)
+        return (self._ebp & 0x0000ffff)
 
     def _set_bp(self,v):
-        self._bp = (v & 0x0000ffff)
+        self._ebp = (v & 0x0000ffff)
 
     def get(self, r):
         """
