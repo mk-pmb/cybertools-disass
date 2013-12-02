@@ -30,14 +30,13 @@ from disass.Disass32 import Disass32
 #
 
 
-
 def reverse(path, verbose):
     print path
     disass = Disass32(path=path, verbose=verbose)
 
     if disass.go_to_next_call('CreateMutex'):
         address_mutex = disass.get_arguments(3)
-        print "  Mutex\t:",disass.get_string(address_mutex)
+        print "  Mutex\t:", disass.get_string(address_mutex)
 
     found = False
 
@@ -46,7 +45,6 @@ def reverse(path, verbose):
         found = True
     if disass.go_to_next_call('__jmp__WS2_32.dll@52'):
         print "  CC2\t:", disass.get_string(disass.get_arguments(1))
-
 
     if not found:
         #
@@ -80,22 +78,17 @@ def reverse(path, verbose):
     return
 
 if __name__ == '__main__':
-
-    verbose = False
     parser = argparse.ArgumentParser(description='bishona_parser')
-    parser.add_argument('--verbose', '-v', help='Do not output anything on the standard output.', action='store_true', default=argparse.SUPPRESS)
+    parser.add_argument('--verbose', '-v', help='Do not output anything on the standard output.', action='store_true',
+                        default=False)
 
     parser.add_argument('path', help='path to analyze', nargs="*")
 
     args = parser.parse_args()
-
-
-    if hasattr(args, 'verbose'):
-        verbose = args.verbose
 
     if len(args.path) == 0:
         print "Usage : bishona_parser.py bishona.infected"
         sys.exit(1)
 
     for path in args.path:
-        reverse(path=path, verbose=verbose)
+        reverse(path=path, verbose=args.verbose)

@@ -22,9 +22,7 @@ from disass.Disass32 import Disass32
 
 
 def reverse(path, verbose):
-
     disass = Disass32(path=path, verbose=verbose)
-
 
     if disass.is_dll():
         addrhMainThread = disass.symbols_exported_by_name['hMainThread']
@@ -42,7 +40,6 @@ def reverse(path, verbose):
     else:
         return
 
-
     # We are searching when C&C are copy
     if not disass.go_to_next_call('lstrcpyW'):
         print >> sys.stderr, "lstrcpyW not found in %s" % path
@@ -51,7 +48,6 @@ def reverse(path, verbose):
     address_cc1 = disass.get_arguments(2)
 
     print disass.get_string(address_cc1)
-
 
     # We are searching when C&C are copy
     if not disass.go_to_next_call('lstrcpyW'):
@@ -63,23 +59,16 @@ def reverse(path, verbose):
 
 
 if __name__ == '__main__':
-
-    verbose = False
     parser = argparse.ArgumentParser(description='minjat_parser')
-    parser.add_argument('--verbose', '-v', help='Do not output anything on the standard output.', action='store_true', default=argparse.SUPPRESS)
+    parser.add_argument('--verbose', '-v', help='Do not output anything on the standard output.', action='store_true',
+                        default=False)
 
     parser.add_argument('path', help='path to analyze', nargs="*")
-
     args = parser.parse_args()
-
-
-    if hasattr(args, 'verbose'):
-        verbose = args.verbose
 
     if len(args.path) == 0:
         print "Usage : minjat_parser.py minjat.infected"
         sys.exit(1)
 
-
     for path in args.path:
-        reverse(path=path, verbose=verbose)
+        reverse(path=path, verbose=args.verbose)

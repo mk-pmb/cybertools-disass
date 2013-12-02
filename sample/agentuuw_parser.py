@@ -24,6 +24,7 @@ from disass.Disass32 import Disass32
 # Tested on 3db2a93d228d332b095379f1e40650ef
 #
 
+
 def reverse(path, verbose):
 
     disass = Disass32(path=path, verbose=verbose)
@@ -31,8 +32,6 @@ def reverse(path, verbose):
     if disass.go_to_next_call('CreateMutex'):
         address_mutex = disass.get_arguments(3)
         print "  Mutex\t:", disass.get_string(address_mutex)
-
-
 
     if disass.go_to_next_call('InternetOpenA'):
         ua = disass.get_string(disass.get_arguments(1))
@@ -79,23 +78,17 @@ def reverse(path, verbose):
 
 
 if __name__ == '__main__':
-
-    verbose = False
     parser = argparse.ArgumentParser(description='agentuuw_parser')
-    parser.add_argument('--verbose', '-v', help='Do not output anything on the standard output.', action='store_true', default=argparse.SUPPRESS)
+    parser.add_argument('--verbose', '-v', help='Do not output anything on the standard output.', action='store_true',
+                        default=False)
 
     parser.add_argument('path', help='path to analyze', nargs="*")
 
     args = parser.parse_args()
 
-
-    if hasattr(args, 'verbose'):
-        verbose = args.verbose
-
     if len(args.path) == 0:
         print "Usage : minjat_parser.py minjat.infected"
         sys.exit(1)
 
-
     for path in args.path:
-        reverse(path=path, verbose=verbose)
+        reverse(path=path, verbose=args.verbose)
