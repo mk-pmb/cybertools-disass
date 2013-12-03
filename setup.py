@@ -25,25 +25,16 @@
 from distutils.core import setup
 
 
-
-data_files = [
-
-      ]
-
-
+data_files = []
 
 setup(
-    name = 'disass',
-    version = '0.5',
+    name='disass',
+    version='0.5',
     packages=['disass'],
     data_files=data_files,
     # Metadata
-    author = 'Ivan Fontarensky',
-    author_email = 'ivan.fontarensky@cassidian.com',
-    license = 'GPLv3',
-    # keywords = '',
-
-
+    author='Ivan Fontarensky',
+    author_email='ivan.fontarensky@cassidian.com',
+    license='GPLv3',
+    # keywords='',
 )
-
-

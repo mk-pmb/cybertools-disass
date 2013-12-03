@@ -22,10 +22,12 @@
 
 __author__ = 'ifontarensky'
 
+
 class DisassException(Exception):
     """Generic Disass Specific exception, to help differentiate from other exceptions"""
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
+
 
 class DataNotWin32ApplicationError(DisassException):
     """Data Not a Win32 Application Exception"""
@@ -36,6 +38,7 @@ class DataNotWin32ApplicationError(DisassException):
 
 class InvalidValueEIP(DisassException):
     """Exception for gracefully not saving Relative URLs in the cache"""
+
 
 class FunctionNameNotFound(DisassException):
     """Exception for failed sanity checks (which can potentially be disabled)"""

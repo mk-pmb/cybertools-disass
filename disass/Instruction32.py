@@ -21,12 +21,14 @@
 """
 
 __author__ = 'ifontarensky'
+
 from pyparsing import Literal, CaselessLiteral, Word, Group, Optional, \
-    ZeroOrMore, Forward, nums, alphas, Regex, ParseException
+    ZeroOrMore, Forward, nums, alphas, Regex, ParserElement, ParseException
 
 import math
 import operator
 import re
+
 
 def bnf(exprStack):
     """
@@ -44,12 +46,12 @@ def bnf(exprStack):
 
     def pushUMinus(strg, loc, toks):
         for t in toks:
-          if t == '-':
-            exprStack.append('unary -')
-            #~ exprStack.append('-1')
-            #~ exprStack.append('*')
-          else:
-            break
+            if t == '-':
+                exprStack.append('unary -')
+                #~ exprStack.append('-1')
+                #~ exprStack.append('*')
+            else:
+                break
 
     point = Literal('.')
     e     = CaselessLiteral('E')
@@ -77,7 +79,8 @@ def bnf(exprStack):
     group = Group(lpar + expr + rpar)
     atom = ((0, None) * minus + atom_action | group).setParseAction(pushUMinus)
 
-    # by defining exponentiation as 'atom [ ^ factor ]...' instead of 'atom [ ^ atom ]...', we get right-to-left exponents, instead of left-to-righ
+    # by defining exponentiation as 'atom [ ^ factor ]...' instead of 'atom [ ^ atom ]...',
+    # we get right-to-left exponents, instead of left-to-right
     # that is, 2^3^2 = 2^(3^2), not (2^3)^2.
     factor = Forward()
     factor << atom + ZeroOrMore((expop + factor).setParseAction(pushFirst))
@@ -117,28 +120,22 @@ def evaluateStack(s):
     else:
         return int(op)
 
-def evaluate(expression, exprStack=None):
-  exprStack = exprStack or []
-  bnf(exprStack).parseString(expression, parseAll=True)
-  return evaluateStack(exprStack[:])
 
-from pyparsing import ParserElement
+def evaluate(expression, exprStack=None):
+    exprStack = exprStack or []
+    bnf(exprStack).parseString(expression, parseAll=True)
+    return evaluateStack(exprStack[:])
+
 
 ParserElement.verbose_stacktrace = False
 
 
-def compute_operation( expVal, register ):
-
+def compute_operation(expVal, register):
     expVal = expVal.lower()
-
     for r in register.get_list_register():
         if r in expVal:
             expVal = expVal.replace(r, str(register.get(r)))
-
-
     return evaluate(expVal)
-
-
 
 
 # vim:ts=4:expandtab:sw=4

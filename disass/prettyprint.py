@@ -22,14 +22,6 @@
 
 __author__ = 'ifontarensky'
 
-import sys
-
-try:
-    from distorm3 import Decode
-except ImportError:
-    print 'distorm3 is not installed, this is a fatal error'
-    print 'pip install distorm3'
-    sys.exit(1)
 
 class bcolors:
     HEADER = '\033[95m'

@@ -31,24 +31,24 @@ notalphanum_re = re.compile('\W+')
 
 TEMPLATES = ['0004080b0c0e0f0m0p0x10141518191c1f1j1p262c30383b3m404145464e4m4p585b5c5d5f606364686e6f7c80838486888a8b8c8e8m8p9094989b9ca1a8adaeahalanapaxb0b2b3b5b6b8babbbebpbxbyc7cacccdcecjcpcxd0d4dddedidldmdwdxeaebecedeeesf1f3fcfffmfpfsh0hdhehlhmhricieilimipjmjnjzl0laldlellmompndnzoporovp0pcpepmpopppspurdres0shsispstsutbteubusv0vdvevfvzwox0x1x2x3x4x5x6x8x9xaxbxcxexfxjxmxoxpxsxtxwxxytz0zx']
 
+
 class Template():
-
-
     def __init__(self, assembly):
         self.assembly = assembly
         self.make_template(assembly)
+        self.ngram = ''
 
-    def compute_ngram(self,lines):
+    def compute_ngram(self, lines):
         """
         Compute ngram for input lines
         """
         line = ''.join(lines)
         return self.key_ngram(line, 2)
 
-    def asciify(self,s):
+    def asciify(self, s):
         return unicodedata.normalize('NFKD', unicode(s)).encode('ASCII', 'ignore')
 
-    def key_ngram(self,s, n):
+    def key_ngram(self, s, n):
         s = s.lower()
         s = notalphanum_re.sub('', s)
         len_s = len(s)
@@ -66,10 +66,9 @@ class Template():
         for t in TEMPLATES:
             return self.levenshtein(self.ngram, t)
 
-
     # http://hetland.org/coding/python/levenshtein.py
     def levenshtein(self, a, b):
-        "Calculates the Levenshtein distance between a and b."
+        """Calculates the Levenshtein distance between a and b."""
         n, m = len(a), len(b)
         if n > m:
             # Make sure n <= m, to use O(min(n,m)) space
@@ -82,7 +81,7 @@ class Template():
                 add, delete = previous[j] + 1, current[j - 1] + 1
                 change = previous[j - 1]
                 if a[j - 1] != b[i - 1]:
-                    change = change + 1
+                    change += 1
                 current[j] = min(add, delete, change)
         return current[n]
 

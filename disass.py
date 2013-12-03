@@ -30,11 +30,11 @@ __author__ = 'jmpicod'
 import sys
 import __builtin__
 
+
 def get_jeanmishell():
     try:
         import IPython.Shell
-        ipsh = IPython.Shell.IPShell(argv=[''], user_ns=locals(), user_global_ns=globals())
-        return ipsh
+        return IPython.Shell.IPShell(argv=[''], user_ns=locals(), user_global_ns=globals())
     except ImportError as e:
         try:
             from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
@@ -43,7 +43,7 @@ def get_jeanmishell():
             ipsh.user_global_ns.update(locals())
             ipsh.autocall = 2
             return ipsh
-        except ImportError as e:
+        except ImportError:
             return None
 
 if __name__ == '__main__':
