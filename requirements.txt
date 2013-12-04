@@ -1,0 +1,5 @@
+ipython>=0.13.2
+pefile>=1.2.10-123
+pytest>=2.2.4
+distorm3==3
+pyparsing>=1.5.6
