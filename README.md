@@ -3,7 +3,7 @@
 Disass is a binary analysis framework written in Python to ease the automation of static malware reverse engineering. The purpose of Disass is to automatically retrieve relevant information in a malware such as the C&C, the user agent, cipher keys, etc.
 
 ## Install
-Checkout the source: `hgt clone http://bitbucket.cassidiancybersecurity.com/disass` and there are a few different ways to use disass. 
+Checkout the source: `hg clone http://bitbucket.cassidiancybersecurity.com/disass` and there are a few different ways to use disass. 
 
 * Install disass : 
 ```shell
