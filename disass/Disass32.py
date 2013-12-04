@@ -432,7 +432,7 @@ class Disass32():
     def _extract_unicode_string(self, data):
         end = data.find("\x00\x00")
         if end != -1:
-            end += end & 1  # round end to the next odd number
+            end += end & 1  # round end to the next even number
             return data[:end].decode('UTF-16LE', 'ignore')
         # FIXME: this case should not happen
         return ""
