@@ -33,6 +33,26 @@ if disass.go_to_next_call('CreateMutex'):
 
 ```
 
+
+It's possible to navigate easely with X references
+```python
+import sys
+from disass.Disass32 import Disass32
+
+disass = Disass32(path='malware.exe', verbose=True)
+
+
+disass.make_xref()
+
+for address in disass.xref['InternetOpenA']:
+    disass.set_position(address)
+
+    # Do some code
+```
+
+
+
+
 ## Author
 
 Disass is written by Ivan Fontarensky (ivan.fontarensky_at_cassidian.com)
