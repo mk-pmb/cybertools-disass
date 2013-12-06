@@ -89,7 +89,7 @@ class Test_Function_Disass32_KimJong(object):
             else:
                 assert False
 
-        assert True 
+        assert True
 
 
 
