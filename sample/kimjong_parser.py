@@ -20,23 +20,78 @@ import sys
 import argparse
 from disass.Disass32 import Disass32
 
+# Tested on :
+# 26eaac1501c62c470a1a9c615c4d7fb8  sysninit.ocx
+
+
+def print_result(valuable_information,value):
+
+    if value == "User-Agent":
+        for string in valuable_information:
+            if "Mozilla" in string:
+                print "%-16s\t %s" % ("User-Agent:", string)
+
+    elif value == "Request":
+        r = ""
+        for string in valuable_information:
+            if 'Content-Type:' not in string \
+                and 'Referer:' not in string \
+                and 'Accept-Encoding:' not in string \
+                and 'Accept-Language:' not in string \
+                and 'Content-Type:' not in string \
+                and 'Mozilla:' not in string \
+                and 'Host:' not in string:
+                r += string
+        for e in r.split('&'):
+            if 'Email' in e:
+                print "%-16s\t %s" % ("Email:", e.replace("Email=", ''))
+            if 'Passwd' in e:
+                print "%-16s\t %s" % ("Password:", e.replace("Passwd=", ''))
+
+
+    else:
+        for string in valuable_information:
+            if value in string:
+                print "%-16s\t%s" % (value+":",string.replace(value+":", ''))
+
 
 def reverse(path, verbose):
     disass = Disass32(path=path, verbose=verbose)
 
-    addressInjectDLL = disass.symbols_exported_by_name['InjectDLL']
+    if disass.is_dll():
+        disass.make_xref()
 
-    disass.set_position(addressInjectDLL)
+        valuable_information = list()
 
-    if disass.go_to_next_call('CreateMutexA'):
-        address_mutex = disass.get_arguments(3)
-        print "  Mutex\t\t:", disass.get_string(address_mutex)
+        for address in disass.xref['InternetOpenA']:
+            disass.set_position(address)
+
+            function = disass.where_am_i()
+            disass.set_position(disass.map_call_by_name[function])
+
+            while disass.go_to_instruction('REP'):
+
+                disass.update_stack_and_register()
+                try:
+                    r =disass.get_string(disass.register.esi)
+                    if r not in valuable_information:
+                        valuable_information.append(r)
+                except:
+                    continue
+
+                # If I change function it's finish
+                if disass.where_am_i() != function:
+                    break
 
 
-    if disass.go_to_next_call('InternetOpenA'):
-        disass.up()
-        disass.up()
-        print "  UserAgent\t:", disass.get_string(disass.get_arguments(3))
+        print_result( valuable_information, 'Host')
+        print_result( valuable_information, 'Content-Type')
+        print_result( valuable_information, 'Accept-Encoding')
+        print_result( valuable_information, 'Referer')
+        print_result( valuable_information, 'Accept-Language')
+        print_result( valuable_information, 'User-Agent')
+        print_result( valuable_information, 'Request')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='kimjong_parser')
