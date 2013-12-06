@@ -131,6 +131,7 @@ class Disass32():
         self.decode = None
         self.backhistory = []
         self.stack = list()
+        self.xref = dict()
 
     def load_win32_pe(self, path=None, data=None):
         """
@@ -242,6 +243,56 @@ class Disass32():
         TODO:
         """
         return self.set_position(pos - self.pe.OPTIONAL_HEADER.ImageBase)
+
+    def make_xref(self):
+
+        self._make_xref("Entrypoint",self.get_entry_point())
+
+        for name,offset in self.symbols_exported_by_name.iteritems():
+            self._make_xref(name,offset)
+
+
+
+    def _make_xref(self, name, offset,depth=1):
+        if offset in self.map_call:
+            return
+
+        self.map_call[offset] = name
+        self.map_call_by_name[name] = offset
+
+        for d in Decode(offset, self.data_code[offset:offset + 0x1000]):
+            instruction = d[2]
+            offset = d[0]
+
+            if "CALL" in instruction:
+                address_expression = self._get_function_name(instruction)
+
+                if "0x" in address_expression:
+                    if '[' in address_expression:
+                        continue
+                    if ':' in address_expression:
+                        continue
+
+                    try:
+                        address = compute_operation(address_expression, self.register)
+                    except Exception as e:
+                        print >> sys.stderr, str(e), address_expression
+                        print >> sys.stderr, "".join([bcolors.FAIL,
+                                                      "\tError: Can't eval CALL instruction'%s'" % instruction,
+                                                      bcolors.ENDC])
+                        continue
+
+                    if address not in self.map_call:
+                        self._make_xref("CALL_%x" % address,address,depth+1)
+
+                    continue
+
+                if self.is_register(instruction):
+                    continue
+
+                if address_expression not in self.xref:
+                    self.xref[address_expression] = set()
+                self.xref[address_expression].add(offset)
 
     @script
     def go_to_instruction(self, instruction, offset=0):
@@ -640,9 +691,12 @@ class Disass32():
                         found = True
                 try:
                     if not found:
-                        if '0x' in last_part and len(last_part) == 8 and '[' not in last_part:
+                        if '0x' in last_part:
                             address = int(last_part, 16)
-                            strva = self.get_string(address)
+                            try:
+                                strva = self.get_string(address)
+                            except:
+                                strva = None
 
                         if '0x' in last_part and len(last_part) == 10 and '[' in last_part:
                             address = int(last_part[1:-1], 16)
