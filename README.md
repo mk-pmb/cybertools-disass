@@ -34,7 +34,7 @@ if disass.go_to_next_call('CreateMutex'):
 ```
 
 
-It's possible to navigate easely with X references
+It's possible to navigate easily with X references
 ```python
 import sys
 from disass.Disass32 import Disass32

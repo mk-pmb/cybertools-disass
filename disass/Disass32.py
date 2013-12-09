@@ -65,7 +65,7 @@ def script(funct_to_script):
 
 
 def make_script():
-    s='''
+    s = '''
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -99,6 +99,7 @@ THISCALL = 0x103
 FASTCALL_CPP_BUILDER = 0x104
 FASTCALL_DELPHI = 0x105
 
+
 class Disass32():
     """
     Detect all executable
@@ -120,6 +121,7 @@ class Disass32():
         self.backhistory = []
         self.data_code = ''
         self.stack = list()
+        self.xref = dict()
         self.load_win32_pe(path=path, data=data)
 
     def _reset(self):
@@ -245,15 +247,12 @@ class Disass32():
         return self.set_position(pos - self.pe.OPTIONAL_HEADER.ImageBase)
 
     def make_xref(self):
+        self._make_xref("Entrypoint", self.get_entry_point())
 
-        self._make_xref("Entrypoint",self.get_entry_point())
+        for name, offset in self.symbols_exported_by_name.iteritems():
+            self._make_xref(name, offset)
 
-        for name,offset in self.symbols_exported_by_name.iteritems():
-            self._make_xref(name,offset)
-
-
-
-    def _make_xref(self, name, offset,depth=1):
+    def _make_xref(self, name, offset, depth=1):
         if offset in self.map_call:
             return
 
@@ -283,7 +282,7 @@ class Disass32():
                         continue
 
                     if address not in self.map_call:
-                        self._make_xref("CALL_%x" % address,address,depth+1)
+                        self._make_xref("CALL_%x" % address, address, depth + 1)
 
                     continue
 
@@ -327,7 +326,7 @@ class Disass32():
             if 'RET' in instruction:
                 return False
 
-            if "CALL" in instruction :
+            if "CALL" in instruction:
                 address_expression = self._get_function_name(instruction)
 
                 if "0x" in address_expression:
@@ -498,7 +497,7 @@ class Disass32():
 
         """
         try:
-            # Récupération de l'adresse
+            # Fetching the address
             if "CALL" in opcode:
                 if "CALL DWORD" in opcode:
                     saddr = opcode.split(' ')[2]
@@ -759,8 +758,7 @@ class Disass32():
         if offset in data:
             return data[offset]
         else:
-            # TODO: consider rewriting this in multiple lines
-            return data[offset] if offset in data else data[min(data.keys(), key=lambda k: abs(offset - k if offset - k > 0 else k))]
+            return data[min(data.keys(), key=lambda k: abs(offset - k if offset - k > 0 else k))]
 
     def where_start_my_bloc(self, offset=None):
         if offset is None:
