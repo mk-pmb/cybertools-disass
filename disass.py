@@ -37,14 +37,17 @@ def get_jeanmishell():
         return IPython.Shell.IPShell(argv=[''], user_ns=locals(), user_global_ns=globals())
     except ImportError as e:
         try:
-            from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
-            ipsh = TerminalInteractiveShell()
-            ipsh.user_global_ns.update(globals())
-            ipsh.user_global_ns.update(locals())
-            ipsh.autocall = 2
-            return ipsh
+            from IPython.terminal.interactiveshell import TerminalInteractiveShell
         except ImportError:
-            return None
+            try:
+                from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
+            except ImportError:
+                return None
+        ipsh = TerminalInteractiveShell()
+        ipsh.user_global_ns.update(globals())
+        ipsh.user_global_ns.update(locals())
+        ipsh.autocall = 2
+        return ipsh
 
 if __name__ == '__main__':
     import code
