@@ -907,6 +907,8 @@ class Disass32():
                         continue
                     if 'MOVZX' in bloc:
                         continue
+                    if 'MOV WORD' in d[2]:
+                        continue
                     try:
 
                         dst = bloc[1][:-1].lower()
